@@ -3693,4 +3693,10 @@ export default {
   "Appearance & units": "外觀與單位",
   "Search above, or pick a body part to browse.": "在上方搜尋，或選擇身體部位來瀏覽。",
   "Switch between light and dark": "切換淺色與深色",
+  "All settings": "所有設定",
+  "Simple settings": "簡易設定",
+  "Only the basics on this screen. Everything else is under All settings, and search still finds it.": "此畫面只顯示基本項目。其餘都在「所有設定」裡，搜尋仍然找得到。",
+  "Up to date": "已是最新",
+  "Update available. Check the bell on Home.": "有可用更新。請查看首頁的鈴鐺。",
+  "Or start one of these": "或者開始下面其中一個",
 }

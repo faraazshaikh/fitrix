@@ -63,6 +63,7 @@ import { warmupAutoOf } from '../lib/warmup-ramp.js'
 import { Section, Row, SelectRow, Switch, Segmented, Button, TextField, SearchField } from '../components/ui.jsx'
 import { POLICIES_FOR, POLICY_NAME, POLICY_DESC, profileRule } from '../lib/progression.js'
 import { PAGES, HUBS, HUB_ORDER, hubPages, hubVisible, pageVisible, searchSettings, pageTrail } from './settings-pages.js'
+import { isSimple, rootLayout } from '../lib/simple-mode.js'
 import { platformNow } from '../lib/platform-now.js'
 import { pathBefore } from '../lib/nav.js'
 import WatchSettingsPage from './WatchSettings.jsx'
@@ -1309,6 +1310,10 @@ function SettingsRoot({ ctx, preview, open, user, sync, home, go, entryKey }) {
   const [key] = useState(() => (entryKey && entryKey !== 'default' && entryKey !== 'back-preview' ? entryKey : window.history.state?.key || null))
   const [q, setQ] = useState(() => (key && lastQuery.key === key ? lastQuery.q : ''))
   const set = v => { lastQuery = { q: v, key }; setQ(v) }
+  const S = useStore(s => s.S)
+  const update = useStore(s => s.update)
+  const [expanded, setExpanded] = useState(false)
+  const layout = rootLayout(HUB_ORDER, S, expanded)
   const hits = q.trim() ? searchSettings(q, ctx) : null
   // The account card: who this is, and the one line that matters about it.
   const acct = DEMO ? { title: t('Demo'), sub: t('Example data, only in this browser.') }
@@ -1346,8 +1351,13 @@ function SettingsRoot({ ctx, preview, open, user, sync, home, go, entryKey }) {
         </button>
       </Section>
       <Section>
-        {HUB_ORDER.filter(h => hubVisible(h, ctx)).map(h => <Row key={h} icon={HUBS[h].icon} iconTint={HUBS[h].tint} title={t(HUBS[h].title)}
+        {layout.hubs.filter(h => hubVisible(h, ctx)).map(h => <Row key={h} icon={HUBS[h].icon} iconTint={HUBS[h].tint} title={t(HUBS[h].title)}
           accessory="chevron" onClick={() => open(h)} className="sp-root-row" tour={'settings-' + h} />)}
+        {/* Simple settings: Reminders sits inside Workouts, which a simple root leaves out. */}
+        {layout.reminders && pageVisible('reminders', ctx) && <Row icon={PAGES.reminders.icon} iconTint={PAGES.reminders.tint} title={t(PAGES.reminders.title)}
+          accessory="chevron" onClick={() => open('reminders')} className="sp-root-row" />}
+        {layout.more && <Row icon="grid" iconTint="var(--grey)" title={t('All settings')}
+          accessory="chevron" onClick={() => setExpanded(true)} className="sp-root-row" />}
         {/* In a hosted app the Coach is the server's, set up by an admin on the admin dashboard. */}
         {adminCoach && <Row icon={PAGES.coach.icon} iconTint={PAGES.coach.tint} title={t(PAGES.coach.title)}
           value={t('Admin')} accessory="chevron" onClick={() => nav('/admin', { state: { section: 'coach' } })} className="sp-root-row" />}
@@ -1358,6 +1368,11 @@ function SettingsRoot({ ctx, preview, open, user, sync, home, go, entryKey }) {
         <Row icon="flame" iconTint="var(--teal)" title={t('BMR calculator')} subtitle={t('Resting energy and daily calories')}
           accessory="chevron" onClick={() => bmrSheet()} />
       </Section>}
+      <Section footer={t('Only the basics on this screen. Everything else is under All settings, and search still finds it.')}>
+        <Row icon="sparkles" iconTint="var(--green)" title={t('Simple settings')}>
+          <Switch aria-label={t('Simple settings')} checked={isSimple(S)} onChange={v => { setExpanded(false); update(s => { s.simple = v }) }} />
+        </Row>
+      </Section>
       <div className="dim small sp-version">Fitrix v{__APP_VERSION__}</div>
     </>}
   </div>

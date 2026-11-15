@@ -28,8 +28,11 @@ export default function NotificationBell() {
   const [update, setUpdate] = useState(null)
   useEffect(() => {
     let live = true
-    getChannel().then(ch => ch === 'sideload' && checkForUpdate()).then(info => { if (live && info) setUpdate(info) }).catch(() => {})
-    return () => { live = false }
+    const look = () => getChannel().then(ch => ch === 'sideload' && checkForUpdate()).then(info => { if (live && info) setUpdate(info) }).catch(() => {})
+    look()
+    // A pull-down refresh (components/PullToRefresh.jsx) has just looked again: read what it found.
+    window.addEventListener('fitrix-refresh', look)
+    return () => { live = false; window.removeEventListener('fitrix-refresh', look) }
   }, [])
   const notices = buildNotices({ user, update, downloadUrl: APP_DOWNLOAD })
   return <button className="iconbtn" data-tour="notifications" aria-label={notices.length ? `Notifications, ${notices.length} new` : 'Notifications'}

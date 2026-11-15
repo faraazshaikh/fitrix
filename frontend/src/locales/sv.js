@@ -3747,4 +3747,10 @@ export default {
   "Appearance & units": "Utseende och enheter",
   "Search above, or pick a body part to browse.": "Sök ovan eller välj en kroppsdel för att bläddra.",
   "Switch between light and dark": "Växla mellan ljust och mörkt",
+  "All settings": "Alla inställningar",
+  "Simple settings": "Enkla inställningar",
+  "Only the basics on this screen. Everything else is under All settings, and search still finds it.": "Bara det viktigaste på den här skärmen. Allt annat finns under ”Alla inställningar”, och sökningen hittar det fortfarande.",
+  "Up to date": "Allt är uppdaterat",
+  "Update available. Check the bell on Home.": "Uppdatering finns. Kolla klockan på Hem.",
+  "Or start one of these": "Eller starta ett av dessa",
 }

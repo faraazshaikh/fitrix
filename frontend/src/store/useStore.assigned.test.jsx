@@ -34,6 +34,15 @@ afterEach(() => {
 })
 
 describe('pullAssigned', () => {
+  it('a pull-down asks at once, inside the minute', async () => {
+    api.mockImplementation(async p => (p === '/api/assigned' ? { plans: [plan('x1', 'Push')] } : { ok: true }))
+    await useStore.getState().pullAssigned()
+    await useStore.getState().pullAssigned()
+    expect(reads()).toHaveLength(1)
+    await useStore.getState().pullAssigned(true)
+    expect(reads()).toHaveLength(2)
+  })
+
   it('files the plans as routines of their own', async () => {
     api.mockImplementation(async p => (p === '/api/assigned' ? { plans: [plan('x1', 'Push')] } : { ok: true }))
     await useStore.getState().pullAssigned()

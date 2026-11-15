@@ -93,7 +93,27 @@ describe('the root', () => {
     mount()
     expect(host.querySelector('.sp-acct .lrow-t').textContent).toBe('Guest')
     expect(host.querySelector('.sp-acct .lrow-s').textContent).toBe('Your data lives on this device. Sign in to sync.')
-    expect(titles()).toEqual(['Guest', 'Workouts', 'Plan & equipment', 'Appearance & units', 'Health & devices', 'Data & backup', 'Body fat calculator', 'BMR calculator'])
+    expect(titles()).toEqual(['Guest', 'Workouts', 'Plan & equipment', 'Appearance & units', 'Health & devices', 'Data & backup', 'Body fat calculator', 'BMR calculator', 'Simple settings'])
+  })
+
+  it('simple settings: the basics, Reminders by themselves, and the rest under All settings', () => {
+    mocks.S.simple = true
+    mocks.push = true
+    mocks.user = { id: 'u1', name: 'Digi' }
+    mount()
+    expect(titles()).toEqual(['Digi', 'Appearance & units', 'Data & backup', 'Reminders', 'All settings', 'Body fat calculator', 'BMR calculator', 'Simple settings'])
+    act(() => rowTitled('All settings').click())
+    expect(titles()).toEqual(['Digi', 'Workouts', 'Plan & equipment', 'Appearance & units', 'Health & devices', 'Data & backup', 'Body fat calculator', 'BMR calculator', 'Simple settings'])
+  })
+
+  it('simple settings: the switch turns it on and off, and the search still finds every page', () => {
+    mount()
+    const sw = () => rowTitled('Simple settings').querySelector('[role="switch"], input')
+    expect(mocks.S.simple).toBeUndefined()
+    act(() => sw().click())
+    expect(mocks.S.simple).toBe(true)
+    mocks.S.simple = true
+    expect(searchSettings('rest timer', guestWeb).map(h => h.page)).toContain('workout')
   })
 
   it('each group lists its pages, with value previews', () => {

@@ -3700,4 +3700,10 @@ export default {
   "Appearance & units": "रूप और इकाइयाँ",
   "Search above, or pick a body part to browse.": "ऊपर खोजें या ब्राउज़ करने के लिए शरीर का कोई हिस्सा चुनें।",
   "Switch between light and dark": "हल्के और गहरे मोड के बीच बदलें",
+  "All settings": "सभी सेटिंग्स",
+  "Simple settings": "सरल सेटिंग्स",
+  "Only the basics on this screen. Everything else is under All settings, and search still finds it.": "इस स्क्रीन पर सिर्फ़ ज़रूरी चीज़ें। बाकी सब “सभी सेटिंग्स” में है, और खोज अब भी उन्हें ढूँढ लेती है।",
+  "Up to date": "अप टू डेट",
+  "Update available. Check the bell on Home.": "अपडेट उपलब्ध है। होम पर घंटी देखें।",
+  "Or start one of these": "या इनमें से कोई शुरू करें",
 }

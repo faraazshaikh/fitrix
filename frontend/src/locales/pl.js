@@ -3700,4 +3700,10 @@ export default {
   "Appearance & units": "Wygląd i jednostki",
   "Search above, or pick a body part to browse.": "Wyszukaj powyżej lub wybierz partię ciała, aby przeglądać.",
   "Switch between light and dark": "Przełącz między jasnym a ciemnym",
+  "All settings": "Wszystkie ustawienia",
+  "Simple settings": "Proste ustawienia",
+  "Only the basics on this screen. Everything else is under All settings, and search still finds it.": "Na tym ekranie tylko podstawy. Reszta jest w „Wszystkie ustawienia”, a wyszukiwarka nadal je znajduje.",
+  "Up to date": "Aktualne",
+  "Update available. Check the bell on Home.": "Dostępna aktualizacja. Sprawdź dzwonek na ekranie głównym.",
+  "Or start one of these": "Albo zacznij jeden z tych",
 }

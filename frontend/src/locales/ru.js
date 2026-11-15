@@ -3704,4 +3704,10 @@ export default {
   "Appearance & units": "Оформление и единицы",
   "Search above, or pick a body part to browse.": "Введите запрос выше или выберите часть тела.",
   "Switch between light and dark": "Переключить светлую и тёмную тему",
+  "All settings": "Все настройки",
+  "Simple settings": "Простые настройки",
+  "Only the basics on this screen. Everything else is under All settings, and search still finds it.": "На этом экране только самое нужное. Всё остальное в разделе «Все настройки», и поиск по-прежнему это находит.",
+  "Up to date": "Всё актуально",
+  "Update available. Check the bell on Home.": "Доступно обновление. Загляните в колокольчик на главной.",
+  "Or start one of these": "Или начните одну из этих",
 }

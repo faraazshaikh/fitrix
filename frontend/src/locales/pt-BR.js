@@ -2457,6 +2457,12 @@ export const PT_BR_OVERRIDES = {
   "Appearance & units": "Aparência e unidades",
   "Search above, or pick a body part to browse.": "Pesquise acima ou escolha uma parte do corpo para explorar.",
   "Switch between light and dark": "Alternar entre claro e escuro",
+  "All settings": "Todas as configurações",
+  "Simple settings": "Configurações simples",
+  "Only the basics on this screen. Everything else is under All settings, and search still finds it.": "Só o básico nesta tela. Todo o resto está em “Todas as configurações”, e a busca continua encontrando.",
+  "Up to date": "Tudo atualizado",
+  "Update available. Check the bell on Home.": "Atualização disponível. Veja o sininho no Início.",
+  "Or start one of these": "Ou comece um destes",
 }
 
 export default { ...pt, ...PT_BR_OVERRIDES }

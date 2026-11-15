@@ -3755,4 +3755,10 @@ export default {
   "Appearance & units": "المظهر والوحدات",
   "Search above, or pick a body part to browse.": "ابحث بالأعلى أو اختر جزءًا من الجسم للتصفح.",
   "Switch between light and dark": "التبديل بين الفاتح والداكن",
+  "All settings": "كل الإعدادات",
+  "Simple settings": "الإعدادات المبسطة",
+  "Only the basics on this screen. Everything else is under All settings, and search still finds it.": "الأساسيات فقط في هذه الشاشة. كل شيء آخر تحت «كل الإعدادات»، والبحث ما زال يجده.",
+  "Up to date": "محدّث",
+  "Update available. Check the bell on Home.": "يتوفر تحديث. تحقق من الجرس في الرئيسية.",
+  "Or start one of these": "أو ابدأ أحد هذه",
 }

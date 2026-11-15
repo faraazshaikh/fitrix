@@ -3697,4 +3697,10 @@ export default {
   "Appearance & units": "Вигляд і одиниці",
   "Search above, or pick a body part to browse.": "Скористайтеся пошуком угорі або виберіть частину тіла.",
   "Switch between light and dark": "Перемкнути світлу й темну тему",
+  "All settings": "Усі налаштування",
+  "Simple settings": "Прості налаштування",
+  "Only the basics on this screen. Everything else is under All settings, and search still finds it.": "На цьому екрані лише найнеобхідніше. Решта в розділі «Усі налаштування», а пошук і далі її знаходить.",
+  "Up to date": "Усе актуально",
+  "Update available. Check the bell on Home.": "Є оновлення. Перегляньте дзвіночок на головній.",
+  "Or start one of these": "Або почніть одне з цих",
 }

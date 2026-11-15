@@ -3700,4 +3700,10 @@ export default {
   "Appearance & units": "화면 및 단위",
   "Search above, or pick a body part to browse.": "위에서 검색하거나 운동 부위를 골라 둘러보세요.",
   "Switch between light and dark": "밝은 모드와 어두운 모드 전환",
+  "All settings": "모든 설정",
+  "Simple settings": "간단한 설정",
+  "Only the basics on this screen. Everything else is under All settings, and search still finds it.": "이 화면에는 꼭 필요한 것만 보입니다. 나머지는 ‘모든 설정’에 있고, 검색으로도 찾을 수 있습니다.",
+  "Up to date": "최신 상태입니다",
+  "Update available. Check the bell on Home.": "업데이트가 있습니다. 홈의 알림 종을 확인하세요.",
+  "Or start one of these": "아니면 이 중 하나를 시작하세요",
 }

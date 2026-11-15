@@ -3703,4 +3703,10 @@ export default {
   "Appearance & units": "Megjelenés és mértékegységek",
   "Search above, or pick a body part to browse.": "Keress fent, vagy válassz testrészt a böngészéshez.",
   "Switch between light and dark": "Váltás világos és sötét között",
+  "All settings": "Összes beállítás",
+  "Simple settings": "Egyszerű beállítások",
+  "Only the basics on this screen. Everything else is under All settings, and search still finds it.": "Ezen a képernyőn csak az alapok. Minden más az „Összes beállítás” alatt van, és a keresés továbbra is megtalálja.",
+  "Up to date": "Naprakész",
+  "Update available. Check the bell on Home.": "Frissítés érhető el. Nézd meg a harangot a Főoldalon.",
+  "Or start one of these": "Vagy indíts egyet ezek közül",
 }

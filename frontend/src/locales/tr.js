@@ -3700,4 +3700,10 @@ export default {
   "Appearance & units": "Görünüm ve birimler",
   "Search above, or pick a body part to browse.": "Yukarıdan arayın veya göz atmak için bir vücut bölgesi seçin.",
   "Switch between light and dark": "Açık ve koyu arasında geçiş yap",
+  "All settings": "Tüm ayarlar",
+  "Simple settings": "Basit ayarlar",
+  "Only the basics on this screen. Everything else is under All settings, and search still finds it.": "Bu ekranda yalnızca temel ayarlar var. Gerisi “Tüm ayarlar” altında, arama da onları hâlâ buluyor.",
+  "Up to date": "Güncel",
+  "Update available. Check the bell on Home.": "Güncelleme var. Ana ekrandaki zile bak.",
+  "Or start one of these": "Ya da bunlardan birini başlat",
 }

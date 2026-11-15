@@ -3700,4 +3700,10 @@ export default {
   "Appearance & units": "外观与单位",
   "Search above, or pick a body part to browse.": "在上方搜索，或选择身体部位来浏览。",
   "Switch between light and dark": "切换浅色和深色",
+  "All settings": "所有设置",
+  "Simple settings": "简易设置",
+  "Only the basics on this screen. Everything else is under All settings, and search still finds it.": "此页面只显示基本项。其余都在“所有设置”里，搜索仍然可以找到。",
+  "Up to date": "已是最新",
+  "Update available. Check the bell on Home.": "有可用更新。请查看首页的铃铛。",
+  "Or start one of these": "或者开始下面其中一个",
 }

@@ -3711,4 +3711,10 @@ export default {
   "Appearance & units": "รูปลักษณ์และหน่วย",
   "Search above, or pick a body part to browse.": "ค้นหาด้านบน หรือเลือกส่วนของร่างกายเพื่อเรียกดู",
   "Switch between light and dark": "สลับระหว่างโหมดสว่างและมืด",
+  "All settings": "การตั้งค่าทั้งหมด",
+  "Simple settings": "การตั้งค่าแบบง่าย",
+  "Only the basics on this screen. Everything else is under All settings, and search still finds it.": "หน้านี้แสดงเฉพาะสิ่งจำเป็น ที่เหลืออยู่ใน “การตั้งค่าทั้งหมด” และการค้นหายังหาเจอ",
+  "Up to date": "เป็นปัจจุบันแล้ว",
+  "Update available. Check the bell on Home.": "มีการอัปเดต ดูที่กระดิ่งในหน้าแรก",
+  "Or start one of these": "หรือเริ่มอันใดอันหนึ่งนี้",
 }

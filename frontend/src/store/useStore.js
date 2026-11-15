@@ -1816,8 +1816,9 @@ export const useStore = create((set, get) => {
 
     // Plans an admin assigned to this profile (lib/assigned-plan.js): filed as routines, saved and
     // synced like any change. A server from before them answers 404, which is simply no plans.
-    async pullAssigned() {
-      if (!get().user || sandbox || adoptHold || assignedBusy || Date.now() - assignedAt < 60000) return
+    // `force`: a pull-down on the screen asked for it, so the one-a-minute wait does not apply.
+    async pullAssigned(force = false) {
+      if (!get().user || sandbox || adoptHold || assignedBusy || (!force && Date.now() - assignedAt < 60000)) return
       assignedBusy = true
       try {
         const { plans } = await api('/api/assigned')

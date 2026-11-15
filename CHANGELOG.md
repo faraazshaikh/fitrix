@@ -4,6 +4,19 @@ Newest first. Each release is a `## vX.Y.Z (YYYY-MM-DD)` section, and the releas
 GitHub and GitLab are that section, word for word. New work goes under `## Unreleased` until the
 tag. Write it for the people using the app: what changed for them, short, no em dashes.
 
+## v1.4.13 (2026-11-16)
+
+**Pull down to refresh.** On Home, Plan, Stats, History and Settings, pull the screen down from the
+top to sync with your server, pick up any plan your trainer sent, and check for a new version of the
+app. If one is waiting, the bell on Home has the download.
+
+**Simple settings.** In You, turn on Simple settings and the first screen keeps only Appearance and
+units, Data and backup, Reminders and the calculators. Everything else is under All settings, and
+the search still finds every setting. It is off until you switch it on.
+
+**Or start one of these.** Under today's workout on Home, the other routines are one tap away. Plans
+your trainer or admin gave you come first, then the ones you have gone longest without.
+
 ## v1.4.12 (2026-11-15)
 
 **Give someone a plan.** In the admin dashboard, open a user and tap Give a plan, then pick one of

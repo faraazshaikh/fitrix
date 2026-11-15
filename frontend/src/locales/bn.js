@@ -3779,4 +3779,10 @@ export default {
   "Appearance & units": "চেহারা ও একক",
   "Search above, or pick a body part to browse.": "উপরে খুঁজুন, অথবা ঘুরে দেখতে শরীরের কোনো অংশ বেছে নিন।",
   "Switch between light and dark": "হালকা ও গাঢ় মোডের মধ্যে বদলান",
+  "All settings": "সব সেটিংস",
+  "Simple settings": "সহজ সেটিংস",
+  "Only the basics on this screen. Everything else is under All settings, and search still finds it.": "এই স্ক্রিনে শুধু প্রয়োজনীয়গুলো। বাকি সব “সব সেটিংস”-এর নিচে, আর সার্চে এখনও পাওয়া যায়।",
+  "Up to date": "আপ টু ডেট",
+  "Update available. Check the bell on Home.": "আপডেট আছে। হোমের ঘণ্টা দেখুন।",
+  "Or start one of these": "অথবা এগুলোর একটি শুরু করুন",
 }
