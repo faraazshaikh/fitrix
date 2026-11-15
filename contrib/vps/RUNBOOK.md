@@ -115,7 +115,22 @@ In a signed-in browser: Settings, Account, "Pair the mobile app". In the app: Se
 sync", enter `https://fit.intellisenselabs.com` and the code. The details and the common errors are in
 `docs/MOBILE.md`.
 
-## Updating later
+## Updating by itself
+
+Once, as root:
+
+```sh
+cd /opt/fitrix && git fetch origin && git reset --hard origin/main && bash contrib/vps/install-auto-update.sh
+```
+
+A systemd timer then checks GitHub every 5 minutes. When `main` has something new it backs up
+`data/`, rebuilds, and checks `/api/health`. If the server does not come back healthy it goes back
+to the commit it was on and skips the bad one until `main` moves on. What it did:
+`tail -n 20 /var/log/fitrix-update.log`. Turn it off with
+`systemctl disable --now fitrix-update.timer`. Whatever lands on `main` goes live, so keep `main`
+for things you want on the server.
+
+## Updating by hand
 
 ```sh
 cd /opt/fitrix && git pull
