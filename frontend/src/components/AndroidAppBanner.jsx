@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useUI } from '../store/useUI.js'
+import { PairSheet } from './Passkeys.jsx'
 import { MOBILE } from '../lib/mobile.js'
 import { APP_DOWNLOAD } from '../lib/update.js'
 import { bannerClosed, closeBanner, isStandalone, showAndroidBanner } from '../lib/android-web.js'
@@ -15,12 +17,15 @@ export default function AndroidAppBanner() {
   return <div className="card" data-testid="android-banner" style={{ margin: '0 0 14px', textAlign: 'start' }}>
     <div style={{ fontWeight: 600 }}>Get the Fitrix app for Android</div>
     <div className="muted small" style={{ margin: '4px 0 0', lineHeight: 1.5 }}>
-      It opens faster and can read your steps, sleep and calories from Health Connect. Install it, then pair it from Settings.
+      It opens faster and can read your steps, sleep and calories from Health Connect. Install it, then tap Pair it now.
     </div>
     <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
       {/* window.open, as the update row in Settings does. */}
       <button className="btn primary" onClick={() => window.open(APP_DOWNLOAD, '_blank', 'noopener')}>Download the app</button>
       <button className="btn" onClick={() => { closeBanner(); setClosed(true) }}>Not now</button>
+    </div>
+    <div style={{ marginTop: 10 }}>
+      <button className="btn ghost" data-testid="pair-installed" onClick={() => useUI.getState().openSheet(close => <PairSheet close={close} />)}>Already installed? Pair it now</button>
     </div>
   </div>
 }

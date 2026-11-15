@@ -13,6 +13,7 @@ import { copyText } from '../lib/clipboard.js'
 import { deviceLinkUrl, deviceLabel } from '../lib/device-link.js'
 import { askAddDeviceData } from '../sheets.jsx'
 import { passwordError, notReached, useAgainOnceReached, ProveOwner } from './PasswordAuth.jsx'
+import { OpenInAppButton } from './PairLink.jsx'
 import QrCanvas from './QrCanvas.jsx'
 import { MOBILE } from '../lib/mobile.js'
 import { Row, Button } from './ui.jsx'
@@ -288,6 +289,7 @@ export function PairSheet({ close }) {
       </div>
       {/* Read out or typed character by character: left to right in every language. */}
       <div className="card" dir="ltr" style={{ textAlign: 'center', fontSize: 30, fontWeight: 700, letterSpacing: '.16em', padding: '18px 0' }}>{pair.code}</div>
+      <OpenInAppButton code={pair.code} />
     </>}
     <div style={{ height: 12 }} />
     <Button onClick={close}>{t('Done')}</Button>

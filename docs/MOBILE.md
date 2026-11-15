@@ -547,6 +547,7 @@ created like a plan file's. A newer link format than the app reads asks for an u
 | Website | `https://opengym.ch/r#P` | `website/r/index.html` (served at /r/): the routine by name and sets, Open in openGym, Get the app, Open in the web app (your server or the demo) |
 | Android | same link | VIEW filter on `MainActivity` (https, opengym.ch, path `/r` and `/r/`, `autoVerify`), so it opens the app directly once opengym.ch serves `/.well-known/assetlinks.json` with the app's signing certificates (Play and sideload). Until then Android may show the page or ask |
 | App | `opengym://r#P` | the website's Open in openGym; the `opengym` scheme is already registered (CFBundleURLTypes, the VIEW filter for `opengym:`). Read through `@capacitor/app`'s `appUrlOpen` and `getLaunchUrl` (`useRoutineLinks`, waits until the app is set up) |
+| App | `opengym://pair?server=<origin>&code=<code>` | the pairing screen's Open in the Fitrix app (Android browsers). Chrome gets `intent://pair?...#Intent;scheme=opengym;package=ch.duartesantos.opengym.test;S.browser_fallback_url=<APK>;end`, so no app means the download. The app asks "Connect this phone to <server>?" and redeems the code on the tap, never before (`usePairLinks`, `PairLinkSheet`, `lib/pair-link.js`) |
 | Web app | `<server>/#/r/P` | read before the router sends the unknown route to /home, then the address goes back to `#/plan` |
 
 iPhone: without associated domains the https link opens the page in Safari, one more tap to the

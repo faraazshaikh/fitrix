@@ -4,6 +4,15 @@ Newest first. Each release is a `## vX.Y.Z (YYYY-MM-DD)` section, and the releas
 GitHub and GitLab are that section, word for word. New work goes under `## Unreleased` until the
 tag. Write it for the people using the app: what changed for them, short, no em dashes.
 
+## v1.4.11 (2026-11-15)
+
+**Pair the Android app in one tap.** On the pairing screen in Settings (Account, Pair the mobile
+app) an Android browser now shows Open in the Fitrix app. It opens the app with the address and
+the code already filled in, and the app asks one question: connect this phone to your site. Tap
+Connect and it is paired. If the app is not installed yet, the button downloads it instead. The
+card on Home has a new Already installed? Pair it now button that goes straight to that screen.
+This one needs the new app file.
+
 ## v1.4.10 (2026-11-15)
 
 **The Android app, offered on the web.** Someone using Fitrix in an Android browser now sees a card

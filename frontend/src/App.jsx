@@ -53,6 +53,7 @@ import { openDeviceLinkRedeem } from './components/Passkeys.jsx'
 import { useAnimPacksBoot } from './components/Animations.jsx'
 import { useNfcTagLinks } from './components/Nfc.jsx'
 import { useRoutineLinks } from './components/RoutineShare.jsx'
+import { usePairLinks } from './components/PairLink.jsx'
 import Login from './views/Login.jsx'
 import MobileOnboarding from './views/MobileOnboarding.jsx'
 import PermissionSteps from './views/PermissionSteps.jsx'
@@ -306,6 +307,9 @@ function Shell() {
   useNfcTagLinks(setupDone)
   // A friend's routine link (components/RoutineShare.jsx): the same wait for the setup.
   useRoutineLinks(setupDone)
+  // A pairing link from the browser (components/PairLink.jsx): it may be what finishes the setup, so
+  // it waits for the app to be up, not for the setup.
+  usePairLinks(ready || authed || needsMobileOnboarding)
   useEffect(() => {
     if (!setupDone || tourAsked.current) return
     const tm = setTimeout(() => {
