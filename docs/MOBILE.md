@@ -673,8 +673,10 @@ it after every web-code change before building natively.
 
 ## App icons & splash screens
 
-`frontend/resources/icon.svg` is the 1024×1024 source (the app's dumbbell glyph on the
-app background). Generate all platform assets from it on a machine with the tooling:
+`frontend/resources/icon.svg` is the 1024×1024 source (the Fitrix mark on the app background).
+`node scripts/app-icons.mjs` draws the default icon from it: the web app's icons, the iOS primary
+icon and the Android launcher layers. The native splash screens were redrawn with the same mark.
+To regenerate platform assets with the Capacitor tool instead, on a machine with the tooling:
 
 ```sh
 cd frontend
@@ -689,7 +691,7 @@ so `npx` fetches it for that one run.
 
 The alternate icons people can pick in Settings → Look & Home → App icon are not made by that
 generator. `node scripts/app-icons.mjs` draws them from the list in
-`src/lib/app-icon-variants.js` and the glyph in `resources/icon.svg`, with no dependencies: the
+`src/lib/app-icon-variants.js` and the dumbbell glyph in `resources/dumbbell.svg`, with no dependencies: the
 SVG per icon in `resources/icons/`, an `AppIcon-<Name>` set (1024 px, opaque) per icon in the iOS
 asset catalog, the Android launcher, round and adaptive layers per density, and the previews in
 `public/app-icons/`. An icon with `art` (Halloween) is a hand-made SVG in `resources/icons/`

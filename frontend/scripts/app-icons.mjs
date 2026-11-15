@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /* The alternate home-screen icons (Settings → Look & Home → App icon), drawn from
- * src/lib/app-icon-variants.js and the dumbbell in resources/icon.svg.
+ * src/lib/app-icon-variants.js. The default icon is the Fitrix mark in resources/icon.svg; the alternates
+ * use the dumbbell glyph in resources/dumbbell.svg.
  *
  * The glyph is five rectangles, so this draws them itself (4x4 to 8x8 samples per pixel for the
  * edges) and writes the PNGs with node:zlib: no sharp or resvg to install, and the same bytes on
@@ -32,8 +33,8 @@ export const DENSITIES = { ldpi: 0.75, mdpi: 1, hdpi: 1.5, xhdpi: 2, xxhdpi: 3, 
 export const PREVIEW = 112
 export const IOS_SIZE = 1024
 
-/** The glyph's rectangles, in the 512 grid of resources/icon.svg: one source for every icon. */
-export function glyph(svg = readFileSync(join(ROOT, 'resources/icon.svg'), 'utf8')) {
+/** The dumbbell's rectangles, in the 512 grid of resources/dumbbell.svg: the glyph of the alternate icons. */
+export function glyph(svg = readFileSync(join(ROOT, 'resources/dumbbell.svg'), 'utf8')) {
   const g = svg.match(/<g[^>]*>([\s\S]*?)<\/g>/)?.[1] || ''
   return [...g.matchAll(/<rect\s+x="(\d+)"\s+y="(\d+)"\s+width="(\d+)"\s+height="(\d+)"/g)]
     .map(m => m.slice(1, 5).map(Number))
@@ -117,7 +118,14 @@ export function scene(svg) {
     if (!self) throw new Error(`app icon art: <${name}> must close itself`)
     if (name === 'rect') {
       const x = num(a, 'x'), y = num(a, 'y'), w = num(a, 'width'), h = num(a, 'height')
-      shapes.push({ box: [x, y, x + w, y + h], hit: (px, py) => px >= x && px < x + w && py >= y && py < y + h, color: paint(a.fill) })
+      const rx = Math.min(num(a, 'rx'), w / 2, h / 2)   // round corners (rx = ry)
+      const inside = (px, py) => {
+        if (px < x || px >= x + w || py < y || py >= y + h) return false
+        if (!rx) return true
+        const cx = Math.min(Math.max(px, x + rx), x + w - rx), cy = Math.min(Math.max(py, y + rx), y + h - rx)
+        return (px - cx) ** 2 + (py - cy) ** 2 <= rx * rx
+      }
+      shapes.push({ box: [x, y, x + w, y + h], hit: inside, color: paint(a.fill) })
     } else if (name === 'circle') {
       const cx = num(a, 'cx'), cy = num(a, 'cy'), r = num(a, 'r')
       shapes.push({ box: [cx - r, cy - r, cx + r, cy + r], hit: (px, py) => (px - cx) ** 2 + (py - cy) ** 2 <= r * r, color: paint(a.fill) })
@@ -261,7 +269,19 @@ export function files(rects = glyph()) {
   const colors = []
   for (const v of APP_ICON_VARIANTS) {
     out.push([`public/app-icons/${v.id}.png`, () => draw(v, PREVIEW, { rects })])
-    if (v.id === 'default') continue
+    if (v.id === 'default') {
+      // The icon the app has when nothing else is picked: the web app's icons, the iOS primary
+      // icon and the Android launcher (its adaptive layers are in mipmap-anydpi-v26/ic_launcher.xml).
+      out.push(['public/icon-180.png', () => draw(v, 180, { rects })])
+      out.push(['public/icon-512.png', () => draw(v, 512, { rects })])
+      out.push(['ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png', () => draw(v, IOS_SIZE, { rects })])
+      for (const [dpi, f] of Object.entries(DENSITIES)) {
+        out.push([`${RES}/mipmap-${dpi}/ic_launcher.png`, () => draw(v, Math.round(48 * f), { rects })])
+        out.push([`${RES}/mipmap-${dpi}/ic_launcher_round.png`, () => draw(v, Math.round(48 * f), { rects, round: true })])
+        out.push([`${RES}/mipmap-${dpi}/ic_launcher_foreground.png`, () => draw(v, Math.round(108 * f), { rects })])
+      }
+      continue
+    }
     if (!v.art) out.push([`resources/icons/${v.id}.svg`, () => svgOf(v, rects)])
     const set = `ios/App/App/Assets.xcassets/${v.ios}.appiconset`
     out.push([`${set}/Contents.json`, () => iosContents])

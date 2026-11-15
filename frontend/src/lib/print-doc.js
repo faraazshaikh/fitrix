@@ -43,11 +43,10 @@ export function probeMarks(probe) {
   return { s: id => mark('s', id), e: id => mark('e', id), h: id => mark('h', id) }
 }
 
-// The app icon (frontend/resources/icon.svg), drawn small: the lime dumbbell on its dark tile.
+// The app icon (frontend/resources/icon.svg), drawn small: the mint plate summit on its dark tile.
 export const LOGO_SVG = '<svg class="logo-mark" viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="112" fill="#0c0e12"/>'
-  + '<g fill="#a3e635"><rect x="80" y="242" width="352" height="28"/><rect x="80" y="199" width="36" height="114"/>'
-  + '<rect x="131" y="169" width="47" height="174"/><rect x="334" y="169" width="47" height="174"/>'
-  + '<rect x="396" y="199" width="36" height="114"/></g></svg>'
+  + '<g fill="#6dd3a0"><rect x="112" y="346" width="288" height="63" rx="31.5"/><rect x="157" y="265" width="198" height="63" rx="31.5"/>'
+  + '<rect x="202" y="184" width="108" height="63" rx="31.5"/><circle cx="256" cy="130" r="27"/></g></svg>'
 
 // "Page {0} of {1}" in the reader's language, as the content of an @page margin box: the text
 // around the two numbers comes from the translation, the numbers from CSS counters.

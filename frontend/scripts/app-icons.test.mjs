@@ -178,3 +178,27 @@ describe('iOS alternate icons', () => {
     expect(pairs).toEqual(ALT.map(v => [v.id, v.ios]))
   })
 })
+
+describe('the default icon (the Fitrix mark)', () => {
+  const v = APP_ICON_VARIANTS.find(x => x.id === 'default')
+
+  it('is drawn from resources/icon.svg, with rounded plates and a dot', () => {
+    expect(v.art).toBe('resources/icon.svg')
+    const shapes = scene(read(v.art))
+    const at = (x, y) => shapes.find(s => s.hit(x, y)).color(x, y).map(Math.round)
+    expect(at(256, 377)).toEqual([109, 211, 160])   // the bottom plate, mint
+    expect(at(256, 130)).toEqual([109, 211, 160])   // the dot
+    expect(at(256, 20)).toEqual([12, 14, 18])       // the dark tile above it
+    expect(at(113, 347)).toEqual([12, 14, 18])      // the plate's corner is round, not square
+  })
+
+  it('writes the web, iOS and Android default icons', () => {
+    const rels = files().map(([rel]) => rel)
+    for (const rel of ['public/icon-180.png', 'public/icon-512.png', 'ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png',
+      `${RES}/mipmap-xxxhdpi/ic_launcher.png`, `${RES}/mipmap-xxxhdpi/ic_launcher_round.png`, `${RES}/mipmap-xxxhdpi/ic_launcher_foreground.png`]) {
+      expect(rels, rel).toContain(rel)
+    }
+    expect(pngInfo(readFileSync(join(ROOT, 'public/icon-512.png')))).toEqual({ width: 512, height: 512, alpha: false })
+    expect(pngInfo(readFileSync(join(ROOT, 'ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png')))).toEqual({ width: IOS_SIZE, height: IOS_SIZE, alpha: false })
+  })
+})
