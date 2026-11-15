@@ -192,7 +192,7 @@ test('3. traineeView holds only the allow-listed keys', () => {
     _ts: 9, unit: 'lb', lengthUnit: 'cm',
     routines: [{ id: 'r1', name: 'Push', emoji: 'x', ex: [{ id: 'bench' }], secret: 'no' }],
     workouts: [
-      { id: 'w1', d: '2026-11-01', start: 1, end: 2, routineId: 'r1', routineIds: ['r1'], name: 'Push', bw: 80, entries: [{ id: 'bench', sets: [{ w: 60, r: 5 }] }], prs: [], note: 'ok', gym: { id: 'g', name: 'Gym' }, media: [{ hash: 'abc' }], hr: { avg: 140 }, loc: { lat: 1 } },
+      { id: 'w1', d: '2026-11-01', start: 1, end: 2, routineId: 'r1', routineIds: ['r1'], name: 'Push', bw: 80, entries: [{ id: 'bench', sets: [{ w: 60, r: 5, media: [{ hash: 'abc', poster: { hash: 'abc' } }] }, { sides: { L: { w: 20, r: 8 }, R: { w: 20, r: 7 } } }], target: { w: 62.5 } }], prs: [], note: 'ok', gym: { id: 'g', name: 'Gym' }, media: [{ hash: 'abc' }], hr: { avg: 140 }, loc: { lat: 1 } },
       { id: 'w2', d: '2026-11-03', entries: [] }, null, 'x'
     ],
     bodyweight: [{ d: '2026-11-01', w: 80.5, t: 1, src: 'scale', note: 'private' }, { d: 'bad', w: 1 }],
@@ -211,6 +211,9 @@ test('3. traineeView holds only the allow-listed keys', () => {
   assert.equal(v.lastWorkout, '2026-11-03');
   assert.deepEqual(v.workouts.map(w => w.id), ['w2', 'w1'], 'newest first, broken rows dropped');
   assert.deepEqual(Object.keys(v.workouts[1]), ['id', 'd', 'start', 'end', 'routineIds', 'routineId', 'name', 'bw', 'entries', 'prs', 'note', 'gym']);
+  // A set's own form video is dropped; what was lifted, side sets and targets included, is kept.
+  assert.deepEqual(v.workouts[1].entries, [{ id: 'bench', sets: [{ w: 60, r: 5 }, { sides: { L: { w: 20, r: 8 }, R: { w: 20, r: 7 } } }], target: { w: 62.5 } }]);
+  assert.deepEqual(state.workouts[0].entries[0].sets[0].media.length, 1, 'the stored workout is not touched');
   assert.deepEqual(v.bodyweight, [{ d: '2026-11-01', w: 80.5, t: 1 }]);
   assert.deepEqual(v.measurements, [{ d: '2026-11-02', t: 2, waist: 81, bodyFat: 19.9, other: [{ id: 'c1', name: 'Muscle ratio', value: 40, unit: '%' }] }]);
   assert.equal(v.assigned, report);

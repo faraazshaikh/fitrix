@@ -29,7 +29,7 @@ const day = new Date().toISOString().slice(0, 10);
 const stateOf = name => ({
   _ts: 1700000000000, unit: 'kg', lengthUnit: 'cm',
   routines: [{ id: 'r1', name: name + ' routine', emoji: 'x', ex: [{ id: 'bench' }] }],
-  workouts: [{ id: 'w-' + name, d: day, start: 1, end: 2, entries: [{ id: 'bench', sets: [{ w: 60, r: 5 }] }], media: [{ hash: 'f'.repeat(64) }], hr: { avg: 150 } }],
+  workouts: [{ id: 'w-' + name, d: day, start: 1, end: 2, entries: [{ id: 'bench', sets: [{ w: 60, r: 5, media: [{ hash: 'd'.repeat(64) }] }] }], media: [{ hash: 'f'.repeat(64) }], hr: { avg: 150 } }],
   bodyweight: [{ d: day, w: 81.5, t: 1 }],
   measurements: [{ d: day, t: 1, waist: 84, bodyFat: 19.9, photo: { hash: 'e'.repeat(64) } }],
   coach: { chats: [`${name}-private-chat`] }
@@ -126,7 +126,7 @@ test('5 to 8, 12. a trainer reaches their own trainees and invites, and nobody e
   assert.deepEqual(mine.body.bodyweight, [{ d: day, w: 81.5, t: 1 }]);
   assert.deepEqual(mine.body.measurements, [{ d: day, t: 1, waist: 84, bodyFat: 19.9, other: [] }]);
   const flat = JSON.stringify(mine.body);
-  for (const leak of ['ann@example.org', 'private-chat', 'f'.repeat(64), 'e'.repeat(64), '"hr"', 'trainerAck', T1]) assert.ok(!flat.includes(leak), `leaks ${leak}`);
+  for (const leak of ['ann@example.org', 'private-chat', 'f'.repeat(64), 'e'.repeat(64), 'd'.repeat(64), '"hr"', 'trainerAck', T1]) assert.ok(!flat.includes(leak), `leaks ${leak}`);
   // The same through a paired phone's token.
   assert.equal((await h.call('GET', `/api/trainer/trainee?id=${A}`, undefined, bearer(T1))).status, 200);
   assert.deepEqual(await h.raw('GET', `/api/trainer/trainee?id=${B}`, undefined, bearer(T1)), none);

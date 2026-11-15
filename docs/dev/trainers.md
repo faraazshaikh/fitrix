@@ -1,6 +1,9 @@
-# Trainers (design, not built yet)
+# Trainers
 
-Status: spec for v1.5.0. Nothing here is in the code until this is approved.
+Status: the server side is built and tested on the branch `feat/v1.5.0-trainers` (`api/trainer.js`,
+`api/test/trainer.test.js`, `api/test/server-trainer.test.js`). The screens are next, and nothing
+is released until they exist: sign-up now needs the 18+ confirmation, which the current app does
+not send. Where the build went further than this note first said, "As built" below says how.
 
 ## What it is
 
@@ -237,6 +240,33 @@ Known gaps, accepted for v1.5.0:
 - No push notification when a plan arrives. Worth adding with pull to refresh.
 - An admin can see everything. That is said in the consent line, not hidden.
 
+## As built (server)
+
+- **Consent is enforced by the server, not left to the screen.** Signing up with an invite bound
+  to an active trainer is first answered `409 { code: 'trainer-consent', trainer: '<name>' }`. The
+  screen shows the line and sends the same request with `trainerSeen: true`. Both sign-up routes.
+  Only someone holding a good code (and the right address, if the invite has one) gets that answer.
+- **`waiting` is one rule** (`canSee`): a trainer is shown what a trainee logged only while
+  `trainerAck` names that trainer. It covers an admin's move and any sign-up where the line was
+  not shown. `trainerAckAt` keeps the date, as the record of consent.
+- **The "no trainer" banner needs a reason after the link is cleared**, so a profile keeps
+  `trainerGone: { why, at, name }` (`demoted`, `deleted`, `released`, `left`, `invite`). It is
+  for display only; access never reads it. An admin's own "no trainer" clears it. A trainer who is
+  only locked out (disabled, expired) keeps the links and shows as `locked`.
+- **A trainee who leaves, or is released, shows on the banner too**, so the admin can give them
+  someone new.
+- **A trainer's own invite only works while that trainer can act** (`inviteLive`): disabling a
+  trainer closes the codes they handed out, enabling opens them again, demoting or deleting drops
+  the unused ones. An admin's invite bound to a trainer stays good and gives "no trainer".
+- **Form videos on single sets are stripped as well** (`entries[].sets[].media`), and a watch's
+  heart rate (`hr`) is not sent.
+- **The admin's list** carries `trainer`, `trainerId`, `trainerName`, `trainerWaiting`,
+  `noTrainer`, `noTrainerWhy`, `hadTrainer`, `trainees` per row and `unassigned` for the banner.
+- **Activity log** also has `trainer.ack`. Trainer events have no filter chip yet (they show
+  under All, a refusal under Failed).
+- Every rule above was broken on purpose once (20 single-line changes to the guard, the
+  allow-list, the invite rules and the consent step): the tests failed each time.
+
 ## Open questions
 
 1. **Access length on a trainer's invite.** DECIDED (15 Nov 2026): none (indefinite), and only an admin sets or extends an end date.
@@ -250,7 +280,7 @@ Known gaps, accepted for v1.5.0:
 
 ## Build order inside v1.5.0
 
-1. `api/trainer.js` + unit tests.
-2. Guard, trainer routes, admin routes, sign-up changes, openapi, server tests 5 to 26.
+1. `api/trainer.js` + unit tests. Done.
+2. Guard, trainer routes, admin routes, sign-up changes, openapi, server tests 5 to 26. Done.
 3. Shared plan components, `Trainer.jsx`, Admin changes, sign-up and You changes, frontend tests.
 4. Docs (SELF_HOSTING paragraph, CHANGELOG), version bump, release, phone check.

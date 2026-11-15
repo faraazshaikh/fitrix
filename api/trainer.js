@@ -183,12 +183,21 @@ function measurement(e) {
   })).filter(o => o.id);
   return out;
 }
-// A logged workout without its photos and videos (`media`) and without what a watch measured
-// (`hr`): neither is part of what a trainee was told their trainer sees.
+// A logged workout without its photos and videos (`media`, on the workout and on single sets) and
+// without what a watch measured (`hr`): neither is part of what a trainee was told their trainer sees.
 const WORKOUT_KEYS = ['id', 'd', 'start', 'end', 'routineIds', 'routineId', 'name', 'bw', 'entries', 'prs', 'excludeFromProgression', 'note', 'rpe', 'gym'];
+// A set can carry a form video of its own (entries[].sets[].media, media.js): a copy of a value
+// without any `media` or `poster` anywhere inside it.
+function noMedia(v, depth = 0) {
+  if (depth > 8 || v === null || typeof v !== 'object') return depth > 8 ? null : v;
+  if (Array.isArray(v)) return v.map(x => noMedia(x, depth + 1));
+  const out = {};
+  for (const [k, x] of Object.entries(v)) if (k !== 'media' && k !== 'poster') out[k] = noMedia(x, depth + 1);
+  return out;
+}
 function workout(w) {
   const out = {};
-  for (const k of WORKOUT_KEYS) if (w[k] !== undefined) out[k] = w[k];
+  for (const k of WORKOUT_KEYS) if (w[k] !== undefined) out[k] = noMedia(w[k]);
   return out;
 }
 const lastSyncOf = (u, S) => Math.max((S && num(S._ts) && S._ts) || 0, (num(u.lastPull) && u.lastPull) || 0) || null;
