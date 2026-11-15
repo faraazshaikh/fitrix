@@ -99,7 +99,7 @@ describe('the app download on the landing page', () => {
     type(page.querySelector('input[placeholder="Invite code"]'), 'abc')
     expect(page.textContent).toContain('Get the Android app')
     const link = [...page.querySelectorAll('a')].find(a => a.textContent === 'Download Fitrix for Android')
-    expect(link.getAttribute('href')).toBe('https://github.com/faraazshaikh/openGym/releases/latest/download/Fitrix.apk')
+    expect(link.getAttribute('href')).toBe('https://github.com/faraazshaikh/fitrix/releases/latest/download/Fitrix.apk')
   })
 
   it('an iPhone gets the Add to Home Screen steps instead of the Android file', () => {

@@ -12,7 +12,7 @@
 import { MOBILE } from './mobile.js'
 import { APK_VARIANTS, APK_VARIANT } from './apk-variant.js'
 
-const REPO = 'faraazshaikh/openGym'
+const REPO = 'faraazshaikh/fitrix'
 const LATEST_URL = `https://api.github.com/repos/${REPO}/releases/latest`
 export const RELEASES_PAGE = `https://github.com/${REPO}/releases/latest`
 // The newest app, whatever its version: every release carries a copy under this fixed name.

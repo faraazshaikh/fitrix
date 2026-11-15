@@ -36,7 +36,7 @@ which proxy file you use in step 5.
 ## 3. Get the code and settings
 
 ```sh
-git clone --branch feat/fitinit-home https://github.com/faraazshaikh/openGym.git /opt/fitrix
+git clone https://github.com/faraazshaikh/fitrix.git /opt/fitrix
 cd /opt/fitrix
 cp contrib/vps/env.vps.example .env
 ```
