@@ -1,5 +1,18 @@
 // Thai UI strings. Keys are the English source strings (see lib/i18n.js).
 export default {
+  "Confirm that you are 18 or older.": "ยืนยันว่าคุณอายุ 18 ปีขึ้นไป",
+  "I agree": "ฉันยอมรับ",
+  "I am 18 or older": "ฉันอายุ 18 ปีขึ้นไป",
+  "Leave trainer": "ออกจากเทรนเนอร์",
+  "Leave {0}?": "ออกจาก {0} ไหม",
+  "My trainees": "ลูกเทรนของฉัน",
+  "OK": "ตกลง",
+  "Sign up under {0}?": "สมัครภายใต้ {0} ไหม",
+  "Your trainer": "เทรนเนอร์ของคุณ",
+  "Your trainer can see your workouts, body weight and body measurements. Not your progress photos.": "เทรนเนอร์ของคุณดูการออกกำลังกาย น้ำหนักตัว และสัดส่วนร่างกายของคุณได้ แต่ดูรูปความคืบหน้าไม่ได้",
+  "Your trainer is now {0}": "เทรนเนอร์ของคุณตอนนี้คือ {0}",
+  "a trainer": "เทรนเนอร์",
+  "{0} no longer sees your workouts, body weight or body measurements. The plans they gave you stay.": "{0} จะไม่เห็นการออกกำลังกาย น้ำหนักตัว หรือสัดส่วนร่างกายของคุณอีก แผนที่ให้ไว้ยังคงอยู่กับคุณ",
   "Connect your health data": "เชื่อมต่อข้อมูลสุขภาพของคุณ",
   "See your steps, sleep and heart rate here from Mi Fitness, Zepp and others, through Health Connect. They stay on this phone.": "ดูก้าวเดิน การนอนหลับ และอัตราการเต้นของหัวใจจาก Mi Fitness, Zepp และแอปอื่น ๆ ได้ที่นี่ ผ่าน Health Connect ข้อมูลจะอยู่บนโทรศัพท์เครื่องนี้เท่านั้น",
   "Health Connect is not available on this phone": "โทรศัพท์เครื่องนี้ไม่มี Health Connect",

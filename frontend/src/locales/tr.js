@@ -1,5 +1,18 @@
 // Turkish UI strings. Keys are the English source strings (see lib/i18n.js).
 export default {
+  "Confirm that you are 18 or older.": "18 yaşında veya daha büyük olduğunu onayla.",
+  "I agree": "Kabul ediyorum",
+  "I am 18 or older": "18 yaşında veya daha büyüğüm",
+  "Leave trainer": "Antrenörden ayrıl",
+  "Leave {0}?": "{0} ile yollar ayrılsın mı?",
+  "My trainees": "Öğrencilerim",
+  "OK": "Tamam",
+  "Sign up under {0}?": "{0} adlı antrenörün altında kaydol?",
+  "Your trainer": "Antrenörün",
+  "Your trainer can see your workouts, body weight and body measurements. Not your progress photos.": "Antrenörün antrenmanlarını, vücut ağırlığını ve vücut ölçülerini görebilir. İlerleme fotoğraflarını göremez.",
+  "Your trainer is now {0}": "Antrenörün artık {0}",
+  "a trainer": "bir antrenör",
+  "{0} no longer sees your workouts, body weight or body measurements. The plans they gave you stay.": "{0} artık antrenmanlarını, vücut ağırlığını ve vücut ölçülerini görmez. Sana verdiği planlar kalır.",
   "Connect your health data": "Sağlık verilerini bağla",
   "See your steps, sleep and heart rate here from Mi Fitness, Zepp and others, through Health Connect. They stay on this phone.": "Adımlarını, uykunu ve nabzını Mi Fitness, Zepp ve diğer uygulamalardan Health Connect aracılığıyla burada gör. Veriler bu telefonda kalır.",
   "Health Connect is not available on this phone": "Health Connect bu telefonda kullanılamıyor",

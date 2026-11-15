@@ -1,5 +1,18 @@
 // Hungarian UI strings. Keys are the English source strings (see lib/i18n.js).
 export default {
+  "Confirm that you are 18 or older.": "Erősítsd meg, hogy elmúltál 18 éves.",
+  "I agree": "Elfogadom",
+  "I am 18 or older": "Elmúltam 18 éves",
+  "Leave trainer": "Edző elhagyása",
+  "Leave {0}?": "Elhagyod: {0}?",
+  "My trainees": "Tanítványaim",
+  "OK": "OK",
+  "Sign up under {0}?": "Regisztrálsz {0} edzőhöz?",
+  "Your trainer": "Az edződ",
+  "Your trainer can see your workouts, body weight and body measurements. Not your progress photos.": "Az edződ látja az edzéseidet, a testsúlyodat és a testméreteidet. A haladási fotóidat nem.",
+  "Your trainer is now {0}": "Az új edződ: {0}",
+  "a trainer": "egy edző",
+  "{0} no longer sees your workouts, body weight or body measurements. The plans they gave you stay.": "{0} már nem látja az edzéseidet, a testsúlyodat és a testméreteidet. A tőle kapott tervek megmaradnak.",
   "Connect your health data": "Kösd be az egészségügyi adataidat",
   "See your steps, sleep and heart rate here from Mi Fitness, Zepp and others, through Health Connect. They stay on this phone.": "Itt látod a lépéseidet, az alvásodat és a pulzusodat a Mi Fitnessből, a Zeppből és más appokból, a Health Connecten keresztül. Ezen a telefonon maradnak.",
   "Health Connect is not available on this phone": "A Health Connect nem érhető el ezen a telefonon",

@@ -63,6 +63,7 @@ import { warmupAutoOf } from '../lib/warmup-ramp.js'
 import { Section, Row, SelectRow, Switch, Segmented, Button, TextField, SearchField } from '../components/ui.jsx'
 import { POLICIES_FOR, POLICY_NAME, POLICY_DESC, profileRule } from '../lib/progression.js'
 import { PAGES, HUBS, HUB_ORDER, hubPages, hubVisible, pageVisible, searchSettings, pageTrail } from './settings-pages.js'
+import { leaveTrainer } from '../components/TrainerNotice.jsx'
 import { isSimple, rootLayout } from '../lib/simple-mode.js'
 import { platformNow } from '../lib/platform-now.js'
 import { pathBefore } from '../lib/nav.js'
@@ -1201,6 +1202,8 @@ export default function Settings({ page = null, find = null, via = null, entryKe
       {user && !DEMO && <ServerSyncSection>
         {MOBILE && <>
           {user.admin && <Row icon="crown" iconTint="var(--indigo)" title={t('Admin dashboard')} accessory="chevron" onClick={() => nav('/admin')} />}
+          {user.trainer && <Row icon="person" iconTint="var(--acc)" title={t('My trainees')} accessory="chevron" onClick={() => nav('/trainer')} />}
+          {user.myTrainer && <Row icon="personCircle" iconTint="var(--blue)" title={t('Your trainer')} value={user.myTrainer.name} accessory="chevron" onClick={() => leaveTrainer(user.myTrainer.name)} />}
           {/* A code to sign in on a computer (#551), behind the same proof as in a browser. */}
           <DeviceLinkRow state={passkeys.st} />
           <AccountIdRow id={user.id} />
@@ -1225,6 +1228,8 @@ export default function Settings({ page = null, find = null, via = null, entryKe
             onClick={() => window.open(REPO, '_blank', 'noopener')} />
         </> : user ? <>
           {user.admin && <Row icon="crown" iconTint="var(--indigo)" title={t('Admin dashboard')} accessory="chevron" onClick={() => nav('/admin')} />}
+          {user.trainer && <Row icon="person" iconTint="var(--acc)" title={t('My trainees')} accessory="chevron" onClick={() => nav('/trainer')} />}
+          {user.myTrainer && <Row icon="personCircle" iconTint="var(--blue)" title={t('Your trainer')} value={user.myTrainer.name} accessory="chevron" onClick={() => leaveTrainer(user.myTrainer.name)} />}
           <PasskeysRow state={passkeys.st} changed={credsChanged} />
           <DeviceLinkRow state={passkeys.st} />
           <Row icon="qr" iconTint="var(--blue)" title={t('Pair the mobile app')} subtitle={t('Connect the Fitrix app on your phone to this account.')} accessory="chevron"

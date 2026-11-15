@@ -1,5 +1,18 @@
 // Ukrainian UI strings. Keys are the English source strings (see lib/i18n.js).
 export default {
+  "Confirm that you are 18 or older.": "Підтвердь, що тобі 18 років або більше.",
+  "I agree": "Погоджуюсь",
+  "I am 18 or older": "Мені 18 років або більше",
+  "Leave trainer": "Залишити тренера",
+  "Leave {0}?": "Залишити {0}?",
+  "My trainees": "Мої підопічні",
+  "OK": "OK",
+  "Sign up under {0}?": "Зареєструватися в тренера {0}?",
+  "Your trainer": "Твій тренер",
+  "Your trainer can see your workouts, body weight and body measurements. Not your progress photos.": "Твій тренер бачить твої тренування, вагу тіла та обміри. Фото прогресу він не бачить.",
+  "Your trainer is now {0}": "Тепер твій тренер: {0}",
+  "a trainer": "тренера",
+  "{0} no longer sees your workouts, body weight or body measurements. The plans they gave you stay.": "{0} більше не бачить твої тренування, вагу тіла та обміри. Плани, які він тобі дав, залишаються.",
   "Connect your health data": "Підключіть дані про здоров’я",
   "See your steps, sleep and heart rate here from Mi Fitness, Zepp and others, through Health Connect. They stay on this phone.": "Дивіться тут кроки, сон і пульс із Mi Fitness, Zepp та інших застосунків через Health Connect. Вони залишаються на цьому телефоні.",
   "Health Connect is not available on this phone": "Health Connect недоступний на цьому телефоні",

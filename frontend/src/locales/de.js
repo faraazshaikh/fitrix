@@ -1,5 +1,18 @@
 // German UI strings. Keys are the English source strings (see lib/i18n.js).
 export default {
+  "Confirm that you are 18 or older.": "Bestätige, dass du mindestens 18 Jahre alt bist.",
+  "I agree": "Ich stimme zu",
+  "I am 18 or older": "Ich bin 18 oder älter",
+  "Leave trainer": "Trainer verlassen",
+  "Leave {0}?": "{0} verlassen?",
+  "My trainees": "Meine Trainees",
+  "OK": "OK",
+  "Sign up under {0}?": "Unter {0} registrieren?",
+  "Your trainer": "Dein Trainer",
+  "Your trainer can see your workouts, body weight and body measurements. Not your progress photos.": "Dein Trainer kann deine Workouts, dein Körpergewicht und deine Körpermaße sehen. Keine Fortschrittsfotos.",
+  "Your trainer is now {0}": "Dein Trainer ist jetzt {0}",
+  "a trainer": "einem Trainer",
+  "{0} no longer sees your workouts, body weight or body measurements. The plans they gave you stay.": "{0} sieht deine Workouts, dein Körpergewicht und deine Körpermaße nicht mehr. Die Pläne, die er dir gegeben hat, bleiben.",
   "Connect your health data": "Gesundheitsdaten verbinden",
   "See your steps, sleep and heart rate here from Mi Fitness, Zepp and others, through Health Connect. They stay on this phone.": "Sieh hier deine Schritte, deinen Schlaf und deinen Puls aus Mi Fitness, Zepp und anderen Apps über Health Connect. Sie bleiben auf diesem Handy.",
   "Health Connect is not available on this phone": "Health Connect ist auf diesem Handy nicht verfügbar",

@@ -15,6 +15,7 @@ import { dateLocale } from '../lib/i18n-core.js'
 import { api, webauthnOK, passkeyAssertion, passwordLogin, passwordRegister, passwordResetRedeem } from '../lib/api.js'
 import { askAddDeviceData } from '../sheets.jsx'
 import { Row, Button } from './ui.jsx'
+import { AdultBox, askTrainerConsent, ADULT_NEEDED } from './SignupConsent.jsx'
 
 // The server's floor (api/password.js MIN_LENGTH), checked here first so the common mistake is
 // answered without a round trip. The server still decides.
@@ -160,6 +161,7 @@ export function PasswordRegisterForm({ close, inviteOnly, name, setName, code, s
   const [again, setAgain] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState(null)
+  const [adult, setAdult] = useState(false)
   const submit = async ev => {
     ev.preventDefault()
     if (busy) return
@@ -170,11 +172,12 @@ export function PasswordRegisterForm({ close, inviteOnly, name, setName, code, s
       : inviteOnly && !code.trim() ? t('An invite code is required')
       : length(pw) < MIN_PASSWORD ? t('Use at least {0} characters.', MIN_PASSWORD)
       : pw !== again ? t('The two passwords are not the same.')
+      : !adult ? ADULT_NEEDED()
       : null
     if (bad) { setErr(bad); return }
     setBusy(true); setErr(null)
     try {
-      const u = await passwordRegister(n, pw, code.trim(), mail)
+      const u = await passwordRegister(n, pw, code.trim(), mail, askTrainerConsent)
       const st = useStore.getState()
       st.setUser(u); close()
       if (hasData(useStore.getState().S)) { await st.pushState(); toast(t('Profile created, and this device’s data moved into it')) }
@@ -202,6 +205,8 @@ export function PasswordRegisterForm({ close, inviteOnly, name, setName, code, s
     <input className="input" type="password" name="new-password-again" autoComplete="new-password" placeholder={t('Repeat the password')}
       value={again} onChange={e => setAgain(e.target.value)} />
     <div className="dim small" style={{ marginTop: 6 }}>{t('At least {0} characters. A few unrelated words make a good one.', MIN_PASSWORD)}</div>
+    <div style={{ height: 12 }} />
+    <AdultBox checked={adult} onChange={setAdult} />
     {err && <div className="small" role="alert" style={errStyle}>{err}</div>}
     <div style={{ height: 12 }} />
     <Button type="submit" variant="primary" disabled={busy}>{t('Create profile')}</Button>

@@ -27,6 +27,7 @@ import { stampWorkout } from './lib/sync-merge.js'
 import { logWeighIn } from './lib/bodyweight.js'
 import { startWidgetSync } from './lib/widgets.js'
 import { startWidgetLinks } from './lib/widget-links.js'
+import useTrainerNotice from './components/TrainerNotice.jsx'
 import { startVoice, todayRoutineIds } from './lib/voice.js'
 import { startLiveActivitySync } from './lib/live-activity.js'
 import { useWakeLock } from './lib/wakelock.js'
@@ -78,6 +79,7 @@ function lazyView(load) {
   }
 }
 const Admin = lazyView(() => import('./views/Admin.jsx'))
+const Trainer = lazyView(() => import('./views/Trainer.jsx'))
 const CoachChat = lazyView(() => import('./views/CoachChat.jsx'))
 const Measurements = lazyView(() => import('./views/Measurements.jsx'))
 const CoachIntake = lazyView(() => import('./views/CoachIntake.jsx'))
@@ -323,6 +325,8 @@ function Shell() {
     const iv = setInterval(pull, 5 * 60 * 1000)
     return () => { document.removeEventListener('visibilitychange', onShow); clearInterval(iv) }
   }, [setupDone, user?.id])
+  // Told whose trainer it is before they see anything (components/TrainerNotice.jsx).
+  useTrainerNotice(setupDone)
   useEffect(() => {
     if (!setupDone || tourAsked.current) return
     const tm = setTimeout(() => {
@@ -376,6 +380,7 @@ function Shell() {
       {isOn(S, 'coach') && <Route path="/coach/proposal" element={<Navigate to="/coach" replace />} />}
       {isOn(S, 'coach') && <Route path="/coach/setup" element={<CoachSetup />} />}
       <Route path="/admin" element={user?.admin ? <Admin /> : <Navigate to="/home" replace />} />
+      <Route path="/trainer" element={user?.trainer ? <Trainer /> : <Navigate to="/home" replace />} />
       <Route path="*" element={<Navigate to="/home" replace />} />
     </Routes>
   ))

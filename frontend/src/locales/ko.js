@@ -1,5 +1,18 @@
 // Korean UI strings. Keys are the English source strings (see lib/i18n.js).
 export default {
+  "Confirm that you are 18 or older.": "만 18세 이상임을 확인해 주세요.",
+  "I agree": "동의합니다",
+  "I am 18 or older": "만 18세 이상입니다",
+  "Leave trainer": "트레이너 떠나기",
+  "Leave {0}?": "{0} 님을 떠날까요?",
+  "My trainees": "내 회원",
+  "OK": "확인",
+  "Sign up under {0}?": "{0} 트레이너로 가입할까요?",
+  "Your trainer": "내 트레이너",
+  "Your trainer can see your workouts, body weight and body measurements. Not your progress photos.": "트레이너가 내 운동 기록, 체중, 신체 치수를 볼 수 있습니다. 진행 사진은 볼 수 없습니다.",
+  "Your trainer is now {0}": "이제 {0} 님이 내 트레이너입니다",
+  "a trainer": "트레이너",
+  "{0} no longer sees your workouts, body weight or body measurements. The plans they gave you stay.": "{0} 님은 더 이상 내 운동 기록, 체중, 신체 치수를 볼 수 없습니다. 받은 플랜은 그대로 남습니다.",
   "Connect your health data": "건강 데이터 연결",
   "See your steps, sleep and heart rate here from Mi Fitness, Zepp and others, through Health Connect. They stay on this phone.": "Mi Fitness, Zepp 등에서 Health Connect를 통해 걸음 수, 수면, 심박수를 여기서 확인하세요. 데이터는 이 휴대폰에만 남습니다.",
   "Health Connect is not available on this phone": "이 휴대폰에서는 Health Connect를 사용할 수 없습니다",

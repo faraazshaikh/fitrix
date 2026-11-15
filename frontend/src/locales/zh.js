@@ -1,5 +1,18 @@
 // Simplified Chinese UI strings. Keys are the English source strings (see lib/i18n.js).
 export default {
+  "Confirm that you are 18 or older.": "请确认你已年满 18 岁。",
+  "I agree": "我同意",
+  "I am 18 or older": "我已年满 18 岁",
+  "Leave trainer": "离开教练",
+  "Leave {0}?": "离开 {0}？",
+  "My trainees": "我的学员",
+  "OK": "好的",
+  "Sign up under {0}?": "注册到 {0} 名下？",
+  "Your trainer": "你的教练",
+  "Your trainer can see your workouts, body weight and body measurements. Not your progress photos.": "你的教练可以看到你的训练、体重和身体围度，看不到你的进度照片。",
+  "Your trainer is now {0}": "你的教练现在是 {0}",
+  "a trainer": "一位教练",
+  "{0} no longer sees your workouts, body weight or body measurements. The plans they gave you stay.": "{0} 不再能看到你的训练、体重和身体围度。他给你的计划会保留。",
   "Connect your health data": "连接你的健康数据",
   "See your steps, sleep and heart rate here from Mi Fitness, Zepp and others, through Health Connect. They stay on this phone.": "通过 Health Connect，在这里查看来自 Mi Fitness、Zepp 等应用的步数、睡眠和心率。数据只保留在这部手机上。",
   "Health Connect is not available on this phone": "这部手机无法使用 Health Connect",

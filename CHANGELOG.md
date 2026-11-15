@@ -4,6 +4,24 @@ Newest first. Each release is a `## vX.Y.Z (YYYY-MM-DD)` section, and the releas
 GitHub and GitLab are that section, word for word. New work goes under `## Unreleased` until the
 tag. Write it for the people using the app: what changed for them, short, no em dashes.
 
+## v1.5.0 (2026-11-16)
+
+**Trainers.** An admin can make anyone a trainer (admin dashboard, open a person, Make trainer). A
+trainer gets My trainees in You: who they train, when each last trained, and the plans they gave
+them. They invite their own trainees with a code, give or update a plan, and release someone. A
+trainer sees only their own trainees' workouts, body weight and body measurements, never their
+progress photos, and never anyone else's people.
+
+**Told before anyone sees anything.** Signing up under a trainer's code shows who the trainer is
+and what they see, and you agree first. Someone an admin moves to a trainer is told the next time
+they open the app. In You, Your trainer lets you leave at any time; the plans they gave you stay.
+A new profile that comes in under a trainer starts with Simple settings on.
+
+**18 or older.** Creating a profile now asks you to confirm you are 18 or older.
+
+**For admins.** Invite a trainer or a trainee (with a trainer picked), see who trains whom, filter
+the list by trainer, and move people who lost their trainer to a new one in one go.
+
 ## v1.4.13 (2026-11-16)
 
 **Pull down to refresh.** On Home, Plan, Stats, History and Settings, pull the screen down from the

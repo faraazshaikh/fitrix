@@ -1,5 +1,18 @@
 // Bengali UI strings. Keys are the English source strings (see lib/i18n.js).
 export default {
+  "Confirm that you are 18 or older.": "নিশ্চিত করুন যে আপনার বয়স ১৮ বছর বা তার বেশি।",
+  "I agree": "আমি সম্মত",
+  "I am 18 or older": "আমার বয়স ১৮ বছর বা তার বেশি",
+  "Leave trainer": "ট্রেনার ছাড়ুন",
+  "Leave {0}?": "{0}-কে ছাড়বেন?",
+  "My trainees": "আমার ট্রেনিরা",
+  "OK": "ঠিক আছে",
+  "Sign up under {0}?": "{0}-এর অধীনে সাইন আপ করবেন?",
+  "Your trainer": "আপনার ট্রেনার",
+  "Your trainer can see your workouts, body weight and body measurements. Not your progress photos.": "আপনার ট্রেনার আপনার ওয়ার্কআউট, শরীরের ওজন ও শরীরের মাপ দেখতে পারেন। অগ্রগতির ছবি নয়।",
+  "Your trainer is now {0}": "আপনার ট্রেনার এখন {0}",
+  "a trainer": "একজন ট্রেনার",
+  "{0} no longer sees your workouts, body weight or body measurements. The plans they gave you stay.": "{0} আর আপনার ওয়ার্কআউট, শরীরের ওজন বা শরীরের মাপ দেখতে পান না। তাঁর দেওয়া প্ল্যান আপনার কাছেই থাকবে।",
   "Connect your health data": "আপনার স্বাস্থ্য ডেটা সংযুক্ত করুন",
   "See your steps, sleep and heart rate here from Mi Fitness, Zepp and others, through Health Connect. They stay on this phone.": "Mi Fitness, Zepp ও অন্যান্য অ্যাপ থেকে Health Connect-এর মাধ্যমে আপনার পদক্ষেপ, ঘুম ও হৃদস্পন্দন এখানে দেখুন। এগুলো এই ফোনেই থাকে।",
   "Health Connect is not available on this phone": "এই ফোনে Health Connect পাওয়া যাচ্ছে না",

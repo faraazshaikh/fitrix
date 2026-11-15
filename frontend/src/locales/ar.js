@@ -1,5 +1,18 @@
 // Arabic UI strings. Keys are the English source strings (see lib/i18n.js).
 export default {
+  "Confirm that you are 18 or older.": "أكّد أن عمرك 18 عامًا أو أكثر.",
+  "I agree": "أوافق",
+  "I am 18 or older": "عمري 18 عامًا أو أكثر",
+  "Leave trainer": "مغادرة المدرب",
+  "Leave {0}?": "مغادرة {0}؟",
+  "My trainees": "متدربيّ",
+  "OK": "حسنًا",
+  "Sign up under {0}?": "التسجيل لدى {0}؟",
+  "Your trainer": "مدربك",
+  "Your trainer can see your workouts, body weight and body measurements. Not your progress photos.": "يستطيع مدربك رؤية تمارينك ووزن جسمك وقياسات جسمك. ولا يرى صور تقدمك.",
+  "Your trainer is now {0}": "مدربك الآن هو {0}",
+  "a trainer": "مدرب",
+  "{0} no longer sees your workouts, body weight or body measurements. The plans they gave you stay.": "لم يعد {0} يرى تمارينك ووزن جسمك وقياسات جسمك. وتبقى الخطط التي أعطاك إياها.",
   "Connect your health data": "اربط بياناتك الصحية",
   "See your steps, sleep and heart rate here from Mi Fitness, Zepp and others, through Health Connect. They stay on this phone.": "شاهد خطواتك ونومك ونبض قلبك هنا من Mi Fitness وZepp وغيرهما عبر Health Connect. تبقى على هذا الهاتف.",
   "Health Connect is not available on this phone": "Health Connect غير متاح على هذا الهاتف",

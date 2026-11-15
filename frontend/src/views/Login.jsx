@@ -14,6 +14,7 @@ import { passwordOn, PasswordRegisterForm, openPasswordSignIn, looksLikeEmail } 
 import Landing from '../components/Landing.jsx'
 import { openDeviceLinkRedeem } from '../components/Passkeys.jsx'
 import { openLostAccess } from '../components/LostAccess.jsx'
+import { AdultBox, askTrainerConsent, toastNeedAdult } from '../components/SignupConsent.jsx'
 
 export function RegisterSheet({ close, initialCode = '' }) {
   const { setUser, pushState, pullState, loadConfig } = useStore()
@@ -21,6 +22,7 @@ export function RegisterSheet({ close, initialCode = '' }) {
   const [name, setName] = useState('')
   const [code, setCode] = useState(initialCode)
   const [email, setEmail] = useState('')
+  const [adult, setAdult] = useState(false)
   const inviteOnly = !!config?.invite_only
   // A password is offered only where the instance allows it (#118), and is the only choice in a
   // browser that cannot make a passkey. Where both work, the passkey stays the first one.
@@ -37,8 +39,9 @@ export function RegisterSheet({ close, initialCode = '' }) {
     if (inviteOnly && !code.trim()) { useUI.getState().toast(t('An invite code is required')); return }
     // An invite is made for one address, so the server wants that same address back.
     if (inviteOnly && !looksLikeEmail(email)) { useUI.getState().toast(t('That is not an e-mail address.')); return }
+    if (!adult) { toastNeedAdult(); return }
     try {
-      const u = await passkeyRegister(n, code.trim(), inviteOnly ? email.trim() : '')
+      const u = await passkeyRegister(n, code.trim(), inviteOnly ? email.trim() : '', askTrainerConsent)
       setUser(u); close()
       if (hasData(useStore.getState().S)) { await pushState(); useUI.getState().toast(t('Profile created, and this device’s data moved into it')) }
       else { await pullState(); useUI.getState().toast(t('Welcome, {0}', u.name)) }
@@ -69,6 +72,8 @@ export function RegisterSheet({ close, initialCode = '' }) {
         onChange={e => setCode(e.target.value.toUpperCase())} style={{ letterSpacing: '.14em', fontWeight: 600, textAlign: 'center' }} />
       <div className="dim small" style={{ marginTop: 6 }}>{t('This app is invite-only. Enter the code you were given.')}</div>
     </>}
+    <div style={{ height: 12 }} />
+    <AdultBox checked={adult} onChange={setAdult} />
     <div style={{ height: 12 }} />
     <Button variant="primary" onClick={go}>{t('Create passkey')}</Button>
   </>

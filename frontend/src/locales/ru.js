@@ -1,5 +1,18 @@
 // Russian UI strings. Keys are the English source strings (see lib/i18n.js).
 export default {
+  "Confirm that you are 18 or older.": "Подтверди, что тебе 18 лет или больше.",
+  "I agree": "Согласен",
+  "I am 18 or older": "Мне 18 лет или больше",
+  "Leave trainer": "Покинуть тренера",
+  "Leave {0}?": "Покинуть {0}?",
+  "My trainees": "Мои подопечные",
+  "OK": "ОК",
+  "Sign up under {0}?": "Зарегистрироваться у тренера {0}?",
+  "Your trainer": "Твой тренер",
+  "Your trainer can see your workouts, body weight and body measurements. Not your progress photos.": "Твой тренер видит твои тренировки, вес тела и обхваты. Фото прогресса он не видит.",
+  "Your trainer is now {0}": "Теперь твой тренер: {0}",
+  "a trainer": "тренера",
+  "{0} no longer sees your workouts, body weight or body measurements. The plans they gave you stay.": "{0} больше не видит твои тренировки, вес тела и обхваты. Планы, которые он тебе дал, остаются.",
   "Connect your health data": "Подключите данные о здоровье",
   "See your steps, sleep and heart rate here from Mi Fitness, Zepp and others, through Health Connect. They stay on this phone.": "Смотрите здесь шаги, сон и пульс из Mi Fitness, Zepp и других приложений через Health Connect. Они остаются на этом телефоне.",
   "Health Connect is not available on this phone": "Health Connect недоступен на этом телефоне",

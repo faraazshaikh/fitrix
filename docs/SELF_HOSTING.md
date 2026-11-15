@@ -299,6 +299,17 @@ without `DEFAULT_LANG`, the same profile can show in German on one phone and in 
 laptop, and the Coach answers in whichever the app is showing. A scheduled review, which no app
 asks for, is written in `DEFAULT_LANG` when it is set.
 
+### Trainers
+
+An admin can make any profile a trainer (admin dashboard, open a person, **Make trainer**), and
+invite one with **New code** set to Trainer. Only an admin makes trainers. A trainer invites their
+own trainees from **My trainees** in You, and sees only those people: their workouts, body weight
+and body measurements, not progress photos or Coach chats. Nobody becomes someone's trainee without
+being told first: signing up under a trainer's code shows the trainer and what they see, and a
+person an admin moves to a trainer is asked the next time they open the app. A trainer's invite
+codes stop working if the trainer is disabled or no longer a trainer. Everyone who signs up
+confirms they are 18 or older. The design and the rules are in [docs/dev/trainers.md](dev/trainers.md).
+
 ### The activity log
 
 The dashboard also keeps an **activity log**: sign-ins, sign-outs, failed attempts, refused

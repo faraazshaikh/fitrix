@@ -1,9 +1,8 @@
 # Trainers
 
-Status: the server side is built and tested on the branch `feat/v1.5.0-trainers` (`api/trainer.js`,
-`api/test/trainer.test.js`, `api/test/server-trainer.test.js`). The screens are next, and nothing
-is released until they exist: sign-up now needs the 18+ confirmation, which the current app does
-not send. Where the build went further than this note first said, "As built" below says how.
+Status: the server side and the screens are built and tested on the branch `feat/v1.5.0-trainers` (`api/trainer.js`,
+`api/test/trainer.test.js`, `api/test/server-trainer.test.js`). Release comes next. The server
+and the app go out together: sign-up needs the 18+ confirmation, which only this app sends. Where the build went further than this note first said, "As built" below says how.
 
 ## What it is
 
@@ -267,6 +266,26 @@ Known gaps, accepted for v1.5.0:
 - Every rule above was broken on purpose once (20 single-line changes to the guard, the
   allow-list, the invite rules and the consent step): the tests failed each time.
 
+## As built (app)
+
+- **Sign-up** (`Login.jsx`, `PasswordAuth.jsx`): an "I am 18 or older" box on both the passkey and
+  the password form; nothing is sent without it. Under a trainer's code the first request is
+  answered 409 `trainer-consent`; `lib/signup-consent.js` shows `askTrainerConsent` (the trainer's
+  name and the consent line) and repeats the request with `trainerSeen`. A no ends quietly.
+- **Trainer page** (`views/Trainer.jsx`, `/trainer`, row "My trainees" in You, only for trainers): the
+  list with last workout and plan count, a person's sheet (recent workouts, body weight, the plans
+  with Give, Update and Take back, Release) and the trainer's own invite codes. A trainee an admin
+  has moved here who has not opened the app yet shows by name only, as "waiting".
+- **Shared with Admin**: `components/AssignedPlans.jsx` (the plan list and the give sheet, taking the
+  routes as props) and `components/InviteShare.jsx` (the sheet after a code is made).
+- **Trainee** (`components/TrainerNotice.jsx`, `lib/trainer-notice.js`): "Your trainer" in You shows
+  the name and leaves on tap. A trainer set after sign-up is announced once on the next open, and
+  only that answer (`POST /api/trainer/ack`) lets the trainer see anything. A profile that is new
+  under a trainer starts with Simple settings on, once, and never overrides a choice made.
+- **Admin** (`views/Admin.jsx`, `lib/admin-trainers.js`): Trainee or Trainer on a new invite, with a
+  trainer picker; per person, Make trainer and a Trained by picker; a "without a trainer" card with
+  a Move sheet (all or nothing); a Show filter on the list. Admin text stays English-only.
+
 ## Open questions
 
 1. **Access length on a trainer's invite.** DECIDED (15 Nov 2026): none (indefinite), and only an admin sets or extends an end date.
@@ -282,5 +301,5 @@ Known gaps, accepted for v1.5.0:
 
 1. `api/trainer.js` + unit tests. Done.
 2. Guard, trainer routes, admin routes, sign-up changes, openapi, server tests 5 to 26. Done.
-3. Shared plan components, `Trainer.jsx`, Admin changes, sign-up and You changes, frontend tests.
-4. Docs (SELF_HOSTING paragraph, CHANGELOG), version bump, release, phone check.
+3. Shared plan components, `Trainer.jsx`, Admin changes, sign-up and You changes, frontend tests. Done.
+4. Docs (SELF_HOSTING paragraph, CHANGELOG), version bump. Done. Release and phone check next.

@@ -4,6 +4,19 @@
 import pt from './pt.js'
 
 export const PT_BR_OVERRIDES = {
+  "Confirm that you are 18 or older.": "Confirme que você tem 18 anos ou mais.",
+  "I agree": "Eu concordo",
+  "I am 18 or older": "Tenho 18 anos ou mais",
+  "Leave trainer": "Deixar o treinador",
+  "Leave {0}?": "Deixar {0}?",
+  "My trainees": "Meus alunos",
+  "OK": "OK",
+  "Sign up under {0}?": "Cadastrar-se com {0}?",
+  "Your trainer": "Seu treinador",
+  "Your trainer can see your workouts, body weight and body measurements. Not your progress photos.": "Seu treinador pode ver seus treinos, seu peso corporal e suas medidas. Não suas fotos de progresso.",
+  "Your trainer is now {0}": "Seu treinador agora é {0}",
+  "a trainer": "um treinador",
+  "{0} no longer sees your workouts, body weight or body measurements. The plans they gave you stay.": "{0} não vê mais seus treinos, seu peso corporal nem suas medidas. Os planos que ele deu a você ficam.",
   'Connect your health data': 'Conecte seus dados de saúde',
   'See your steps, sleep and heart rate here from Mi Fitness, Zepp and others, through Health Connect. They stay on this phone.': 'Veja aqui seus passos, seu sono e sua frequência cardíaca do Mi Fitness, do Zepp e de outros apps, pelo Health Connect. Eles ficam neste celular.',
   'Health Connect is not available on this phone': 'O Health Connect não está disponível neste celular',

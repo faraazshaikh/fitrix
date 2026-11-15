@@ -1,5 +1,18 @@
 // Swedish UI strings. Keys are the English source strings (see lib/i18n.js).
 export default {
+  "Confirm that you are 18 or older.": "Bekräfta att du är 18 år eller äldre.",
+  "I agree": "Jag godkänner",
+  "I am 18 or older": "Jag är 18 år eller äldre",
+  "Leave trainer": "Lämna tränaren",
+  "Leave {0}?": "Lämna {0}?",
+  "My trainees": "Mina adepter",
+  "OK": "OK",
+  "Sign up under {0}?": "Registrera dig hos {0}?",
+  "Your trainer": "Din tränare",
+  "Your trainer can see your workouts, body weight and body measurements. Not your progress photos.": "Din tränare kan se dina pass, din kroppsvikt och dina kroppsmått. Inte dina framstegsbilder.",
+  "Your trainer is now {0}": "Din tränare är nu {0}",
+  "a trainer": "en tränare",
+  "{0} no longer sees your workouts, body weight or body measurements. The plans they gave you stay.": "{0} ser inte längre dina pass, din kroppsvikt eller dina kroppsmått. Planerna som tränaren gav dig finns kvar.",
   "Connect your health data": "Anslut dina hälsodata",
   "See your steps, sleep and heart rate here from Mi Fitness, Zepp and others, through Health Connect. They stay on this phone.": "Se dina steg, din sömn och din puls från Mi Fitness, Zepp och andra appar här, via Health Connect. De stannar på den här telefonen.",
   "Health Connect is not available on this phone": "Health Connect finns inte på den här telefonen",

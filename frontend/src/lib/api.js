@@ -3,6 +3,7 @@ import { t } from './i18n-core.js'
 import { MOBILE } from './mobile.js'
 import { appBase } from './app-base.js'
 import { nativeFetch } from './capacitor-fetch.js'
+import { withTrainerConsent } from './signup-consent.js'
 
 export const IS_APPLE = /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent)
 export const IS_ANDROID = /Android/.test(navigator.userAgent)
@@ -380,6 +381,7 @@ function credToJSON(cred) {
 export function passkeyError(e, fallback) {
   switch (e?.data?.code) {
     case 'invite': return t('That invite code is not valid.')
+    case 'adult': return t('Confirm that you are 18 or older.')
     case 'unknown-credential': return t('This server doesn’t know that passkey. Make a profile first.')
     case 'disabled': return t('This account has been disabled.')
     case 'challenge-expired': return t('That took a little too long. Give it another go.')
@@ -387,10 +389,12 @@ export function passkeyError(e, fallback) {
   }
   return e?.message || fallback
 }
-export async function passkeyRegister(name, code, email) {
+export async function passkeyRegister(name, code, email, askTrainer) {
   // The address rides along only where an invite is tied to one: the server compares it with the
-  // address the invite was made for and refuses a sign-up that brings another.
-  const { cid, options } = await api('/api/register/options', { method: 'POST', body: JSON.stringify({ name, code: code || '', ...(email ? { email } : {}) }) })
+  // address the invite was made for and refuses a sign-up that brings another. `adult` is the
+  // 18+ box, which the sign-up screens will not send without; a trainer's invite is answered once
+  // with the trainer's name first (lib/signup-consent.js), and `askTrainer` shows it.
+  const { cid, options } = await withTrainerConsent(extra => api('/api/register/options', { method: 'POST', body: JSON.stringify({ name, code: code || '', adult: true, ...(email ? { email } : {}), ...extra }) }), askTrainer || (async () => false))
   const cred = await navigator.credentials.create({ publicKey: toCreationOptions(options) })
   const res = await api('/api/register/verify', { method: 'POST', body: JSON.stringify({ cid, credential: credToJSON(cred) }) })
   return res.user
@@ -430,8 +434,8 @@ export async function passwordLogin(name, password) {
 }
 // `email` is optional, and sent only when there is one: a server from before the field would
 // otherwise ignore it without a word, which is the same thing.
-export async function passwordRegister(name, password, code, email) {
-  return (await post('/api/register/password', { name, password, code: code || '', ...(email ? { email } : {}) })).user
+export async function passwordRegister(name, password, code, email, askTrainer) {
+  return (await withTrainerConsent(extra => post('/api/register/password', { name, password, code: code || '', adult: true, ...(email ? { email } : {}), ...extra }), askTrainer || (async () => false))).user
 }
 export async function passwordResetRedeem(name, code, next) {
   return (await post('/api/login/password-reset', { name, code, next })).user

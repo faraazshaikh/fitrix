@@ -13,6 +13,9 @@ import { confirmSheet } from '../sheets.jsx'
 import Icon from '../components/Icon.jsx'
 import { Button, TextField } from '../components/ui.jsx'
 import AdminCoach from './AdminCoach.jsx'
+import { AssignedPlans } from '../components/AssignedPlans.jsx'
+import { InviteCreatedSheet } from '../components/InviteShare.jsx'
+import { trainerChoices, filterUsers, noTrainerWhy, inviteBody } from '../lib/admin-trainers.js'
 import '../admin.css'
 
 // Admin-only operator dashboard (owner passkey + admin flag; guarded again server-side).
@@ -60,69 +63,75 @@ function RecoveryCodeSheet({ name, code, expires, close }) {
   </>
 }
 
-// One of your own routines to hand to someone: it is copied (with the custom exercises it uses) into
-// their assigned plans, and shows in their Plan tab. With `aid` it replaces the plan they have.
-function GivePlanSheet({ user, aid, nameHint, done, close }) {
-  const S = useStore(s => s.S)
+// Trainer role and who trains this person (docs/dev/trainers.md). Both are the admin's call alone.
+function TrainerSection({ u, trainers, onChanged, close }) {
   const toast = useUI(s => s.toast)
+  const choices = trainerChoices(trainers, u.id)
+  const [pick, setPick] = useState(u.trainerId || '')
+  const setRole = trainer => api('/api/admin/user/trainer-role', { method: 'POST', body: JSON.stringify({ id: u.id, trainer }) })
+    .then(r => { toast(trainer ? u.name + ' is a trainer now' : u.name + ' is no longer a trainer' + (r.released ? ' (' + r.released + ' left without a trainer)' : '')); onChanged(); close() })
+    .catch(e => toast(e.message))
+  const move = () => api('/api/admin/user/trainer', { method: 'POST', body: JSON.stringify({ ids: [u.id], trainerId: pick || null }) })
+    .then(() => { toast(pick ? u.name + ' moved' : u.name + ' has no trainer'); onChanged(); close() })
+    .catch(e => toast(e.message))
+  return <>
+    <h4 className="sec">Trainer</h4>
+    <div className="adm-hint" style={{ marginTop: 0 }}>{u.trainer
+      ? u.name + ' is a trainer with ' + (u.trainees || 0) + (u.trainees === 1 ? ' trainee' : ' trainees') + '. They see only their own trainees’ workouts, body weight and body measurements.'
+      : u.trainerName ? 'Trained by ' + u.trainerName + (u.trainerWaiting ? ', who sees nothing of theirs until they open the app and are told.' : '.')
+      : u.noTrainer ? 'No trainer: ' + noTrainerWhy({ why: u.noTrainerWhy, trainerName: u.hadTrainer }) + '.'
+      : 'Not a trainer and not trained by one.'}</div>
+    {!u.disabled && <button className="btn" style={{ margin: '8px 0 4px' }}
+      onClick={() => u.trainer
+        ? confirmSheet({ title: 'Remove ' + u.name + ' as trainer?', message: 'Their trainees keep their accounts and plans and have no trainer at once. The invite codes they handed out stop working.', confirmText: 'Remove trainer', danger: true, onConfirm: () => setRole(false) })
+        : setRole(true)}>{u.trainer ? 'Remove trainer' : 'Make trainer'}</button>}
+    {!u.trainer && <>
+      <div className="adm-field" style={{ marginTop: 10 }}>
+        <label>Trained by</label>
+        <select className="adm-select" value={pick} onChange={e => setPick(e.target.value)}>
+          <option value="">No trainer</option>
+          {choices.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+        </select>
+      </div>
+      <button className="btn" disabled={pick === (u.trainerId || '')} onClick={move}>Move</button>
+      <div className="adm-hint">They are told whose trainee they are the next time they open the app, and the trainer sees nothing of theirs until then.</div>
+    </>}
+  </>
+}
+
+// Move the people on the banner (or any list of ids) to a trainer in one go. All or nothing on the
+// server. The picked trainer is shown to each of them on their next open.
+function MoveSheet({ people, trainers, onChanged, close }) {
+  const toast = useUI(s => s.toast)
+  const choices = trainerChoices(trainers)
+  const [picked, setPicked] = useState(() => new Set(people.map(p => p.id)))
+  const [to, setTo] = useState(choices[0]?.id || '')
   const [busy, setBusy] = useState(false)
-  const own = (S.routines || []).filter(r => r && r.id && !r.assigned && Array.isArray(r.ex) && r.ex.length)
-  const list = own.slice().sort((a, b) => (b.name === nameHint) - (a.name === nameHint))
-  const send = r => {
-    if (busy) return
+  const flip = id => setPicked(p => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n })
+  const go = () => {
     setBusy(true)
-    const used = new Set(r.ex.map(e => e && e.id))
-    const customEx = (S.customEx || []).filter(c => c && used.has(c.id))
-    api('/api/admin/user/plan', { method: 'POST', body: JSON.stringify({ id: user.id, aid: aid || undefined, routine: r, customEx }) })
-      .then(() => { toast(aid ? user.name + ' gets the update' : r.name + ' is on its way to ' + user.name); done(); close() })
+    api('/api/admin/user/trainer', { method: 'POST', body: JSON.stringify({ ids: [...picked], trainerId: to }) })
+      .then(r => { toast(r.moved + (r.moved === 1 ? ' person moved' : ' people moved')); onChanged(); close() })
       .catch(e => { setBusy(false); toast(e.message) })
   }
   return <>
-    <h3>{aid ? 'Update the plan' : 'Give ' + user.name + ' a plan'}</h3>
-    <div className="adm-hint" style={{ marginTop: 0 }}>Pick one of your routines. {user.name} gets a copy in their Plan tab the next time the app syncs{aid ? ', replacing the one they have' : ''}.</div>
-    {list.length ? <div className="list" style={{ gap: 0, marginTop: 10 }}>
-      {list.map(r => <div key={r.id} className="item" onClick={() => send(r)} style={busy ? { opacity: .55 } : null}>
-        <div className="grow"><div className="tt">{r.name}</div><div className="ss">{r.ex.length} {r.ex.length === 1 ? 'exercise' : 'exercises'}</div></div>
-        <Icon name="chevronRight" />
-      </div>)}
-    </div> : <div className="adm-empty">You have no routines yet. Make one in your Plan tab first.</div>}
+    <h3>Move to a trainer</h3>
+    {choices.length ? <>
+      <div className="adm-field"><label>Trainer</label>
+        <select className="adm-select" value={to} onChange={e => setTo(e.target.value)}>
+          {choices.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+        </select></div>
+      <div className="adm-group-t">Who</div>
+      {people.map(p => <label key={p.id} className="row" style={{ gap: 10, padding: '7px 0', borderBottom: 'var(--hair) solid var(--sep)' }}>
+        <input type="checkbox" checked={picked.has(p.id)} onChange={() => flip(p.id)} /><span className="small">{p.name}</span></label>)}
+      <div className="adm-hint">Each of them is told whose trainee they are the next time they open the app. Until then the trainer sees only their name.</div>
+      <div style={{ height: 12 }} />
+      <Button variant="primary" disabled={busy || !picked.size || !to} onClick={go}>Move {picked.size}</Button>
+    </> : <div className="adm-empty">There is no trainer to move them to. Make someone a trainer first.</div>}
   </>
 }
 
-// The plans you gave this person, whether they trained each, and the way to give, update or take one back.
-function AssignedPlans({ user, assigned, reload }) {
-  const toast = useUI(s => s.toast)
-  const openSheet = useUI(s => s.openSheet)
-  const give = (aid, nameHint) => openSheet(close => <GivePlanSheet user={user} aid={aid} nameHint={nameHint} done={reload} close={close} />)
-  const take = p => confirmSheet({
-    title: 'Take back ' + p.name + '?',
-    message: user.name + ' loses it from their Plan tab on their next sync. The workouts they logged with it stay.',
-    confirmText: 'Take back', danger: true,
-    onConfirm: () => api('/api/admin/user/plan/remove', { method: 'POST', body: JSON.stringify({ id: user.id, aid: p.aid }) })
-      .then(() => { toast('Taken back'); reload() }).catch(e => toast(e.message)),
-  })
-  return <>
-    <h4 className="sec">Plan</h4>
-    {assigned.length ? <div className="list" style={{ gap: 0 }}>
-      {assigned.map(p => <div key={p.aid} style={{ padding: '9px 2px', borderBottom: '1px solid var(--sep)' }}>
-        <div className="row between">
-          <div><div className="small" style={{ fontWeight: 600 }}>{p.name}</div>
-            <div className="dim" style={{ fontSize: 'var(--fs-caption2)' }}>{p.exercises} {p.exercises === 1 ? 'exercise' : 'exercises'} · sent {fmtDate(p.at.slice(0, 10), true)}</div></div>
-          <span className={'adm-pill' + (p.sessions ? ' acc' : '')}>{p.sessions ? 'trained ' + p.sessions + (p.sessions === 1 ? ' time' : ' times') : 'not trained yet'}</span>
-        </div>
-        {p.lastTrained && <div className="dim" style={{ fontSize: 'var(--fs-caption2)' }}>last trained {fmtDate(p.lastTrained, true)}</div>}
-        <div className="row" style={{ gap: 8, margin: '6px 0 2px' }}>
-          <button className="btn" onClick={() => give(p.aid, p.name)}>Update</button>
-          <button className="btn danger" onClick={() => take(p)}>Take back</button>
-        </div>
-      </div>)}
-    </div> : <div className="adm-empty">No plan given yet.</div>}
-    <button className="btn" style={{ margin: '10px 0 4px' }} onClick={() => give(null, null)}>Give a plan</button>
-    <div className="adm-hint">Copies one of your routines into their Plan tab. Send it again from here to change it for them.</div>
-  </>
-}
-
-function UserDetail({ id, viewerOwner, onChanged, close }) {
+function UserDetail({ id, viewerOwner, trainers = [], onChanged, close }) {
   const me = useStore(s => s.user)
   const [d, setD] = useState(null)
   const toast = useUI(s => s.toast)
@@ -241,6 +250,7 @@ function UserDetail({ id, viewerOwner, onChanged, close }) {
         {u.expiresAt && <button className="btn" onClick={() => confirmSheet({ title: 'Make ' + u.name + ' indefinite?', message: 'They keep access until you disable or delete the account.', confirmText: 'Make indefinite', onConfirm: () => setValidity(null) })}>Make indefinite</button>}
       </div>
     </>}
+    {!u.owner && <TrainerSection u={u} trainers={trainers} onChanged={onChanged} close={close} />}
     {!u.admin && <>
       <button className={'btn ' + (u.disabled ? 'primary' : 'danger')} style={{ margin: '12px 0 4px' }}
         onClick={() => u.disabled ? setDisabled(false)
@@ -297,19 +307,22 @@ const untilText = (iso, expired) => (expired ? 'ended ' : 'until ') + fmtDate(is
 
 // The form behind "New code": who it is for, the address it is tied to, how long they get once
 // they sign up. 1 month is what the box starts on; blank is not a choice, "Indefinite" is.
-function NewInviteSheet({ close, done }) {
+function NewInviteSheet({ close, done, trainers = [] }) {
   const toast = useUI(s => s.toast)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [validity, setValidity] = useState('1')      // '1'..'120' months, or 'indefinite'
   const [busy, setBusy] = useState(false)
+  const [role, setRole] = useState('trainee')
+  const [trainerId, setTrainerId] = useState('')
+  const choices = trainerChoices(trainers)
   const months = validity === 'indefinite' ? null : Number(validity)
   const okEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
   const okMonths = months === null || (Number.isInteger(months) && months >= 1 && months <= 120)
   const ready = name.trim() && okEmail && okMonths && !busy
   const make = () => {
     setBusy(true)
-    api('/api/admin/invites/new', { method: 'POST', body: JSON.stringify({ name: name.trim(), email: email.trim(), months }) })
+    api('/api/admin/invites/new', { method: 'POST', body: JSON.stringify(inviteBody({ name: name.trim(), email: email.trim(), months, role, trainerId })) })
       .then(({ invite }) => { done(); close(); openCodeSheet(invite) })
       .catch(e => { setBusy(false); toast(e.message) })
   }
@@ -325,6 +338,20 @@ function NewInviteSheet({ close, done }) {
       <label>Email</label>
       <TextField value={email} onChange={e => setEmail(e.target.value)} placeholder="alex@example.com" inputMode="email" autoCapitalize="none" autoCorrect="off" />
     </div>
+    <div className="adm-field">
+      <label>They join as</label>
+      <select className="adm-select" value={role} onChange={e => setRole(e.target.value)}>
+        <option value="trainee">Trainee</option>
+        <option value="trainer">Trainer</option>
+      </select>
+    </div>
+    {role === 'trainee' && choices.length > 0 && <div className="adm-field">
+      <label>Trained by</label>
+      <select className="adm-select" value={trainerId} onChange={e => setTrainerId(e.target.value)}>
+        <option value="">No trainer</option>
+        {choices.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+      </select>
+    </div>}
     <div className="adm-field">
       <label>How long can they use it</label>
       <select className="adm-select" value={validity === 'indefinite' ? 'indefinite' : [1, 2, 3, 6, 12, 24].includes(months) ? String(months) : 'other'}
@@ -346,49 +373,10 @@ function NewInviteSheet({ close, done }) {
   </>
 }
 
-// The server's own address, as the person will type it: the paired server in the phone app, this
-// site in a browser.
-const serverBase = () => (remoteAuth()?.base || appBase()).replace(/\/+$/, '')
-
-// The phone's share sheet (WhatsApp, SMS, mail...) in the app, the browser's where it has one,
-// else the clipboard.
-async function shareText(text, title) {
-  const dismissed = e => e?.name === 'AbortError' || /cancel/i.test(String(e?.message || e?.errorMessage || ''))
-  if (MOBILE) {
-    try { const { Share } = await import('@capacitor/share'); await Share.share({ title, text, dialogTitle: title }); return true } catch (e) { if (dismissed(e)) return true }
-  } else if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-    try { await navigator.share({ title, text }); return true } catch (e) { if (dismissed(e)) return true }
-  }
-  return false
-}
-
-// One invite: the code, and what to send the person with it. The message holds the link that fills
-// the code in on the sign-up page, where the app download is.
-function InviteCreatedSheet({ invite, close }) {
-  const toast = useUI(s => s.toast)
-  const message = inviteMessage({ base: serverBase(), invite })
-  const copy = async text => toast((await copyText(text)) ? 'Copied' : 'Could not copy')
-  const share = async () => { if (!(await shareText(message, 'Fitrix invite'))) copy(message) }
-  return <>
-    <h3>Invite for {invite.name || 'them'}</h3>
-    <div className="adm-lead">Send {invite.name || 'them'} the message below. Its link opens the sign-up page with the code filled in and the app to download. They sign up with <b>{invite.email || 'any name'}</b>. It works once, for {invite.months ? monthsText(invite.months) + ' from the day they sign up' : 'as long as you keep the account (indefinite)'}.</div>
-    <button className="adm-code" style={{ fontSize: 'var(--fs-title2)', width: '100%', padding: '14px 0' }} onClick={() => copy(invite.code)} aria-label="copy code">{invite.code}</button>
-    <pre className="adm-hint" style={{ whiteSpace: 'pre-wrap', margin: '12px 0', fontFamily: 'inherit', userSelect: 'text' }}>{message}</pre>
-    <Button variant="primary" onClick={share}>Share invite</Button>
-    <div style={{ height: 8 }} />
-    <div className="row" style={{ gap: 8 }}>
-      <button className="btn" style={{ flex: 1 }} onClick={() => copy(message)}>Copy message</button>
-      <button className="btn" style={{ flex: 1 }} onClick={() => copy(invite.code)}>Copy code</button>
-    </div>
-    <div style={{ height: 8 }} />
-    <Button variant="ghost" onClick={close}>Done</Button>
-  </>
-}
-
-function InvitesCard({ invites, reload, inviteOnly }) {
+function InvitesCard({ invites, reload, inviteOnly, trainers }) {
   const toast = useUI(s => s.toast)
   const openSheet = useUI(s => s.openSheet)
-  const gen = () => openSheet(close => <NewInviteSheet close={close} done={reload} />)
+  const gen = () => openSheet(close => <NewInviteSheet close={close} done={reload} trainers={trainers} />)
   const revoke = code => confirmSheet({
     title: 'Revoke code ' + code + '?', message: 'Anyone who has it can no longer use it. People who already signed up with it are not affected.',
     confirmText: 'Revoke', danger: true,
@@ -506,6 +494,8 @@ export default function Admin() {
   const [usersErr, setUsersErr] = useState(null)   // why the last load failed, until one succeeds
   const [invites, setInvites] = useState(null)
   const [inviteOnly, setInviteOnly] = useState(false)
+  const [lost, setLost] = useState([])             // had a trainer, have none now (the banner)
+  const [filter, setFilter] = useState('all')
   const [tick, setTick] = useState(0)          // the ↻ button; the activity log listens to it
 
   // A failed load, or an answer without a list, used to leave the page on "Loading…" for good —
@@ -515,7 +505,7 @@ export default function Admin() {
   const loadUsers = () => api('/api/admin/users')
     .then(d => {
       if (!Array.isArray(d?.users)) throw new Error('The server answered without a list of users.')
-      setUsers(d.users); setInviteOnly(!!d.invite_only); setUsersErr(null)
+      setUsers(d.users); setInviteOnly(!!d.invite_only); setLost(Array.isArray(d.unassigned) ? d.unassigned : []); setUsersErr(null)
     })
     .catch(e => setUsersErr(e.message || 'Failed to load'))
   const loadInvites = () => api('/api/admin/invites').then(d => setInvites(d.invites)).catch(() => {})
@@ -525,7 +515,7 @@ export default function Admin() {
 
   // From the list rather than the stored session, which may predate a handover.
   const viewerOwner = !!(users || []).find(u => u.id === user.id)?.owner
-  const openUser = id => openSheet(close => <UserDetail id={id} viewerOwner={viewerOwner} onChanged={loadUsers} close={close} />)
+  const openUser = id => openSheet(close => <UserDetail id={id} viewerOwner={viewerOwner} trainers={users} onChanged={loadUsers} close={close} />)
   const liveUsers = (users || []).filter(u => u.live)
   const activeCount = (users || []).filter(u => u.lastSync && Date.now() - u.lastSync < 7 * 86400000).length
   const disabledCount = (users || []).filter(u => u.disabled).length
@@ -549,6 +539,16 @@ export default function Admin() {
       </div>
     </div>}
 
+    {lost.length > 0 && <div className="card" style={{ borderColor: 'var(--orange, var(--acc))' }}>
+      <div className="row between"><h2 style={{ margin: 0 }}>{lost.length} without a trainer</h2>
+        <Button size="sm" onClick={() => openSheet(close => <MoveSheet people={lost} trainers={users} onChanged={loadUsers} close={close} />)}>Move</Button></div>
+      <div className="adm-lead">They had a trainer and have none now. They keep the app and their plans.</div>
+      {lost.map(p => <div key={p.id} className="row between" style={{ padding: '6px 2px', borderBottom: 'var(--hair) solid var(--sep)' }} onClick={() => openUser(p.id)}>
+        <div className="small" style={{ fontWeight: 600 }}>{p.name}</div>
+        <div className="dim" style={{ fontSize: 'var(--fs-caption2)', textAlign: 'end' }}>{noTrainerWhy(p)}</div>
+      </div>)}
+    </div>}
+
     <div className="tiles" style={{ marginBottom: 12 }}>
       <div className="tile"><div className="l">Users</div><div className="v">{users ? users.length : '–'}</div></div>
       <div className="tile"><div className="l">Training now</div><div className="v" style={{ color: liveUsers.length ? 'var(--acc)' : undefined }}>{users ? liveUsers.length : '–'}</div></div>
@@ -570,16 +570,26 @@ export default function Admin() {
         page on a box that never enabled it is byte-for-byte the page it was before. */}
     <div ref={coachRef} className="adm-coach-anchor"><AdminCoach /></div>
 
-    <InvitesCard invites={invites} reload={loadInvites} inviteOnly={inviteOnly} />
+    <InvitesCard invites={invites} reload={loadInvites} inviteOnly={inviteOnly} trainers={users} />
 
     <div className="card">
       <h2 style={{ margin: 0 }}>Users</h2>
       <div className="adm-lead">Everyone with a profile on this instance. Tap one to see their activity, to disable the account (nothing is deleted) or to delete it with all their data for good.</div>
+      {(users || []).some(u => u.trainer) && <div className="adm-field">
+        <label>Show</label>
+        <select className="adm-select" value={filter} onChange={e => setFilter(e.target.value)}>
+          <option value="all">Everyone</option>
+          <option value="trainers">Trainers</option>
+          <option value="trainees">People with a trainer</option>
+          {lost.length > 0 && <option value="none">Without a trainer</option>}
+          {trainerChoices(users).map(t => <option key={t.id} value={t.id}>Trained by {t.name}</option>)}
+        </select>
+      </div>}
       <div className="list">
-        {(users || []).map(u => <div key={u.id} className="item" onClick={() => openUser(u.id)} style={u.disabled || u.expired ? { opacity: .55 } : null}>
-          <div className="grow"><div className="tt">{u.live && <Icon name="dot" style={{ fontSize: 9, color: 'var(--green)', display: 'inline-block', marginInlineEnd: 5 }} />}{u.name} {u.admin && <span className="adm-pill acc" style={{ marginInlineStart: 4 }}>{u.owner ? 'owner' : 'admin'}</span>}{u.disabled && <span className="adm-pill bad" style={{ marginInlineStart: 4 }}>disabled</span>}{u.expired && <span className="adm-pill bad" style={{ marginInlineStart: 4 }}>access ended</span>}</div>
+        {filterUsers(users, filter).map(u => <div key={u.id} className="item" onClick={() => openUser(u.id)} style={u.disabled || u.expired ? { opacity: .55 } : null}>
+          <div className="grow"><div className="tt">{u.live && <Icon name="dot" style={{ fontSize: 9, color: 'var(--green)', display: 'inline-block', marginInlineEnd: 5 }} />}{u.name} {u.admin && <span className="adm-pill acc" style={{ marginInlineStart: 4 }}>{u.owner ? 'owner' : 'admin'}</span>}{u.trainer && <span className="adm-pill acc" style={{ marginInlineStart: 4 }}>trainer</span>}{u.disabled && <span className="adm-pill bad" style={{ marginInlineStart: 4 }}>disabled</span>}{u.expired && <span className="adm-pill bad" style={{ marginInlineStart: 4 }}>access ended</span>}</div>
             <div className="ss">{u.live ? 'training now · ' + u.live.name : u.workouts + ' workouts' + (u.lastWorkout ? ' · last ' + fmtDate(u.lastWorkout) : '') + ' · last sync ' + rel(u.lastSync)}</div>
-            {u.email && <div className="ss" title="sign-in e-mail">{u.email}</div>}</div>
+            {u.trainerName && <div className="ss">trained by {u.trainerName}</div>}{u.email && <div className="ss" title="sign-in e-mail">{u.email}</div>}</div>
           {u.hasPush && <Icon name="bell" title="push notifications on" style={{ fontSize: 'var(--fs-subhead)', color: 'var(--label-3)' }} />}<Icon name="chevronRight" className="chev" />
         </div>)}
         {users && !users.length && <div className="adm-empty">No users yet.</div>}
