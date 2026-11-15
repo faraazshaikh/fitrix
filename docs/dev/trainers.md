@@ -9,7 +9,7 @@ Three kinds of people on one server:
 | Who | Sees | Can do |
 | --- | --- | --- |
 | **Admin** (today's admin, the owner included) | every profile | everything the admin dashboard does today, plus make and unmake trainers and move a trainee from one trainer to another |
-| **Trainer** | only their own trainees | invite trainees, see their workouts and body weight, give, update and take back plans, release a trainee |
+| **Trainer** | only their own trainees | invite trainees, see their workouts, body weight and body measurements, give, update and take back plans, release a trainee |
 | **Trainee** (every other profile) | only themselves, and the name of their trainer | train, leave their trainer |
 
 A trainer never sees another trainer's trainees, their invites, or that they exist.
@@ -17,7 +17,7 @@ A trainer never sees another trainer's trainees, their invites, or that they exi
 ## Decisions already taken
 
 1. Only an admin creates trainers. A trainer invites trainees only.
-2. A trainee is told, in plain words, that their trainer can see their workouts and body weight.
+2. A trainee is told, in plain words, that their trainer can see their workouts, body weight and body measurements.
 3. The app is for adults: sign-up asks for an 18+ confirmation.
 4. An admin can change trainee to trainer and back at any time.
 5. When a trainer leaves, their trainees keep the app and go to the admin as "no trainer" until the admin gives them a new one.
@@ -118,9 +118,9 @@ Every new route gets its entry in `api/openapi.yaml` (the route test compares th
 - routines: id, name, emoji, exercise count
 - assigned plans with sessions and last trained (`assignedReport`)
 - workouts, without their photos and videos (as the admin view already strips them)
-- body weight log
+- body weight log and body measurements (waist, body fat and the other check-in fields)
 
-Never: e-mail, whether a password is set, passkeys, invite code, recovery or reset codes, body measurements other than weight, progress photos, Coach chats, integrations, push subscriptions, the activity log.
+Never: e-mail, whether a password is set, passkeys, invite code, recovery or reset codes, progress photos, Coach chats, integrations, push subscriptions, the activity log.
 
 A trainer cannot: disable, delete, extend access, reset a password, make a recovery code, change roles, read the activity log, or call any `/api/admin/*` route (those stay `requireAdmin`, and a trainer is not an admin).
 
@@ -143,8 +143,8 @@ One code path for all of these: demoted, disabled, expired, deleted by an admin,
 
 ### Consent
 
-- Invite sign-up screen, when the invite is bound to a trainer: "Your trainer <name> and the Fitrix admin can see your workouts and body weight. You can leave your trainer at any time in You." Shown before the account is created.
-- When an admin moves a trainee to a different trainer, the new trainer gets the trainee in their list as `waiting`, with the name only. Workouts and body weight open up once the trainee has opened the app and seen "Your trainer is now <name>" (`POST /api/trainer/ack`). Giving plans works straight away, since that reads nothing.
+- Invite sign-up screen, when the invite is bound to a trainer: "Your trainer <name> and the Fitrix admin can see your workouts, body weight and body measurements. You can leave your trainer at any time in You." Shown before the account is created.
+- When an admin moves a trainee to a different trainer, the new trainer gets the trainee in their list as `waiting`, with the name only. Workouts, weight and measurements open up once the trainee has opened the app and seen "Your trainer is now <name>" (`POST /api/trainer/ack`). Giving plans works straight away, since that reads nothing.
 - You, Account shows the trainer's name and a "Leave trainer" button.
 
 This is a product decision, not legal advice. Body weight is personal data about health under UK and Indian law, so before real customers use it the privacy wording should be checked by someone qualified.
@@ -153,7 +153,7 @@ This is a product decision, not legal advice. Body weight is personal data about
 
 - 25 unused invites per trainer at a time.
 - 12 assigned plans per trainee (already there).
-- Trainer invites carry no access end date unless decided otherwise (open question 1).
+- Trainer invites carry no access end date; only an admin sets or extends one (decided).
 
 ### Activity log
 
@@ -161,7 +161,7 @@ This is a product decision, not legal advice. Body weight is personal data about
 
 ## App
 
-- `views/Trainer.jsx`, route `/trainer`: the list, a trainee's page (plans, workouts, weight), invites. Reached from You as "My trainees", shown only when `user.trainer`.
+- `views/Trainer.jsx`, route `/trainer`: the list, a trainee's page (plans, workouts, weight, measurements), invites. Reached from You as "My trainees", shown only when `user.trainer`.
 - `GivePlanSheet` and `AssignedPlans` move out of `views/Admin.jsx` into `components/` and take the API calls as props, so the admin and the trainer screens share them.
 - `views/Admin.jsx`: Trainee / Trainer choice and an optional "Trainer" picker on the invite form; a Trainer switch and a "Trainer" picker on each person; the "no trainer" banner with Move; a trainer filter on the user list.
 - Sign-up: the consent line and the 18+ box.
@@ -228,7 +228,7 @@ Frontend: `Trainer.test.jsx` (list, give plan, waiting state), `Admin.test.jsx` 
 | Trainer floods invites | 25 open at a time. Note the consequence that is by design: on an invite-only server every trainer is now a way in. The admin's invite list shows every code, who made it and who used it |
 | Trainee moved T1 to T2 and back to T1 | ack was cleared on the first move, so T1 waits for the trainee again |
 | Trainer invite used on an open (not invite-only) server is ignored | invite is now always resolved when sent |
-| Two trainers train each other | allowed and harmless: access is one hop, each sees only the other's workouts and weight, by an admin's deliberate move |
+| Two trainers train each other | allowed and harmless: access is one hop, each sees only the other's workouts, weight and measurements, by an admin's deliberate move |
 
 Known gaps, accepted for v1.5.0:
 
@@ -239,9 +239,9 @@ Known gaps, accepted for v1.5.0:
 
 ## Open questions
 
-1. **Access length on a trainer's invite.** Default here: none (indefinite), and only an admin sets or extends an end date. Alternative: the admin sets one default length that every trainer invite carries.
-2. **May a trainer release a trainee themselves?** Default here: yes, they go to "no trainer".
-3. **May a trainer see body measurements (waist, body fat) as well as weight?** Default here: no, weight only, to match the consent line. Trainers will probably ask for it, and the consent line would then need to say so.
+1. **Access length on a trainer's invite.** DECIDED (15 Nov 2026): none (indefinite), and only an admin sets or extends an end date.
+2. **May a trainer release a trainee themselves?** DECIDED (15 Nov 2026): yes, they go to "no trainer".
+3. **May a trainer see body measurements (waist, body fat) as well as weight?** DECIDED (15 Nov 2026): yes, weight and measurements, still no progress photos. The consent line says so.
 
 ## What this leaves room for
 
