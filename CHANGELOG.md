@@ -4,6 +4,13 @@ Newest first. Each release is a `## vX.Y.Z (YYYY-MM-DD)` section, and the releas
 GitHub and GitLab are that section, word for word. New work goes under `## Unreleased` until the
 tag. Write it for the people using the app: what changed for them, short, no em dashes.
 
+## v1.4.10 (2026-11-15)
+
+**The Android app, offered on the web.** Someone using Fitrix in an Android browser now sees a card
+at the top of Home with a Download the app button that goes to the newest version. Not now closes
+it for good on that device. It does not show in the app itself, on an iPhone or on a computer. This
+one is on the website only, so there is no new app file for it.
+
 ## v1.4.9 (2026-11-15)
 
 **A new logo.** Fitrix has its own mark now: stacked plates with a dot on top, for climbing one

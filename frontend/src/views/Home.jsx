@@ -33,6 +33,7 @@ import { isOn } from '../lib/modules.js'
 import HomeToday from '../components/HomeToday.jsx'
 import Elapsed from '../components/Elapsed.jsx'
 import NotificationBell from '../components/NotificationBell.jsx'
+import AndroidAppBanner from '../components/AndroidAppBanner.jsx'
 
 // Home = what to do now + a quick glance. Deep charts & history live in Stats.
 export default function Home() {
@@ -150,6 +151,9 @@ export default function Home() {
         <button className="iconbtn" data-tour="theme-bulb" onClick={flipTheme} aria-label={t('Switch between light and dark')}><Icon name="lightbulb" /></button>
       </div>
     </div>
+
+    {/* Only for Android browsers: the app is one tap away (lib/android-web.js). */}
+    <AndroidAppBanner />
 
     {/* Today's rings and the health connection (lib/home-today.js). */}
     <HomeToday />
