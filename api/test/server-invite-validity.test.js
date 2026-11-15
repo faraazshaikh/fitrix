@@ -81,16 +81,16 @@ test('the code only works with the address it was made for, and the months start
   const h = await startServer(t);
   const { invite } = (await h.invite({ name: 'Alex', email: 'alex@example.com', months: 2 })).body;
 
-  const wrong = await h.call('POST', '/api/register/password', { name: 'Alex', password: PW, code: invite.code, email: 'someone@else.com' });
+  const wrong = await h.call('POST', '/api/register/password', { adult: true, name: 'Alex', password: PW, code: invite.code, email: 'someone@else.com' });
   assert.equal(wrong.status, 403);
   assert.equal(wrong.body.code, 'invite-email');
-  const none = await h.call('POST', '/api/register/password', { name: 'Alex', password: PW, code: invite.code });
+  const none = await h.call('POST', '/api/register/password', { adult: true, name: 'Alex', password: PW, code: invite.code });
   assert.equal(none.status, 403);
   assert.equal(none.body.code, 'invite-email');
   assert.equal(h.db().invites[0].usedBy, undefined, 'a refused sign-up leaves the code unused');
 
   const before = Date.now();
-  const ok = await h.call('POST', '/api/register/password', { name: 'Alex', password: PW, code: invite.code, email: 'ALEX@example.com' });
+  const ok = await h.call('POST', '/api/register/password', { adult: true, name: 'Alex', password: PW, code: invite.code, email: 'ALEX@example.com' });
   assert.equal(ok.status, 200);
   const user = h.db().users.find(u => u.name === 'Alex');
   assert.ok(user.expiresAt, 'a months invite puts an end date on the account');
@@ -98,14 +98,14 @@ test('the code only works with the address it was made for, and the months start
   assert.ok(days > 58 && days < 63, `two months out, got ${days.toFixed(1)} days`);
 
   // Each code works once.
-  const again = await h.call('POST', '/api/register/password', { name: 'Alex2', password: PW, code: invite.code, email: 'alex@example.com' });
+  const again = await h.call('POST', '/api/register/password', { adult: true, name: 'Alex2', password: PW, code: invite.code, email: 'alex@example.com' });
   assert.equal(again.status, 403);
 });
 
 test('an indefinite invite never sets an end date; an invite without an address takes any', async t => {
   const h = await startServer(t);
   const { invite } = (await h.invite({ name: 'Free' })).body;
-  const ok = await h.call('POST', '/api/register/password', { name: 'Free', password: PW, code: invite.code });
+  const ok = await h.call('POST', '/api/register/password', { adult: true, name: 'Free', password: PW, code: invite.code });
   assert.equal(ok.status, 200);
   assert.equal(h.db().users.find(u => u.name === 'Free').expiresAt, undefined);
 });
@@ -132,7 +132,7 @@ test('once the months have passed the account is locked out, data kept, and an a
 test('the validity route: months extend from what is left, null is indefinite, the owner is exempt', async t => {
   const h = await startServer(t);
   const { invite } = (await h.invite({ name: 'Lee', months: 1 })).body;
-  await h.call('POST', '/api/register/password', { name: 'Lee', password: PW, code: invite.code });
+  await h.call('POST', '/api/register/password', { adult: true, name: 'Lee', password: PW, code: invite.code });
   const lee = h.db().users.find(u => u.name === 'Lee');
   const first = Date.parse(lee.expiresAt);
 

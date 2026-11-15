@@ -251,7 +251,7 @@ test('a flood from a shared address leaves passkey sign-in, registration and pai
     invites: [{ code: 'GOODCODE', created: new Date().toISOString() }]
   });
   for (let i = 0; i < 100; i++) await h.req('POST', '/api/login/options', { body: {} });
-  for (let i = 0; i < 30; i++) assert.equal((await h.req('POST', '/api/register/options', { body: { name: 'X', code: 'JUNK' + i } })).status, 403);
+  for (let i = 0; i < 30; i++) assert.equal((await h.req('POST', '/api/register/options', { body: { adult: true, name: 'X', code: 'JUNK' + i } })).status, 403);
   for (let i = 0; i < 30; i++) assert.equal((await h.req('POST', '/api/pair/redeem', { body: { code: 'JUNK' + i } })).status, 400);
   await Promise.all(Array.from({ length: 25 }, (_, i) => login(h, 'name' + i, 'wrong password')));
   // Password sign-in is what the shared address pauses — for everybody behind it, as documented.
@@ -261,7 +261,7 @@ test('a flood from a shared address leaves passkey sign-in, registration and pai
   const signedIn = await h.req('POST', '/api/login/verify', { body: { cid, credential: key.assertion(options.challenge) } });
   assert.equal(signedIn.status, 200, 'passkey sign-in');
   assert.ok(signedIn.cookie);
-  assert.equal((await h.req('POST', '/api/register/options', { body: { name: 'Cleo', code: 'goodcode' } })).status, 200, 'passkey signup');
+  assert.equal((await h.req('POST', '/api/register/options', { body: { adult: true, name: 'Cleo', code: 'goodcode' } })).status, 200, 'passkey signup');
   const pairProof = (await h.req('POST', '/api/login/options', { body: {} })).body;
   const { code } = (await h.req('POST', '/api/pair/create', { cookie: signedIn.cookie, body: { cid: pairProof.cid, credential: key.assertion(pairProof.options.challenge) } })).body;
   assert.equal((await h.req('POST', '/api/pair/redeem', { body: { code } })).status, 200, 'pairing');
@@ -294,7 +294,7 @@ test('registration with a password: policy, unique names among password holders,
     users: [withPassword('u1', 'Ana'), user('u2', 'Bea')],
     invites: [{ code: 'INVITE1', created: new Date().toISOString() }]
   });
-  const reg = (body, ip = '198.51.100.80') => h.req('POST', '/api/register/password', { body, ip });
+  const reg = (body, ip = '198.51.100.80') => h.req('POST', '/api/register/password', { body: { adult: true, ...body }, ip });
   assert.deepEqual((await reg({ name: 'Cleo', password: GOOD })).body.code, 'invite');
   assert.equal((await reg({ name: 'Cleo', password: GOOD, code: 'WRONG' })).status, 403);
   assert.equal((await reg({ name: 'Cleo', password: 'short', code: 'invite1' })).body.code, 'too-short');
@@ -313,7 +313,7 @@ test('registration with a password: policy, unique names among password holders,
   assert.equal((await reg({ name: 'Dora', password: GOOD, code: 'INVITE1' }, '198.51.100.81')).status, 403);
   // A name that only a passkey profile has is free to take; the two never meet at sign-in.
   const h2 = await startServer(t, { users: [user('u2', 'Bea')] });
-  assert.equal((await h2.req('POST', '/api/register/password', { body: { name: 'bea', password: GOOD }, ip: '198.51.100.82' })).status, 200);
+  assert.equal((await h2.req('POST', '/api/register/password', { body: { adult: true, name: 'bea', password: GOOD }, ip: '198.51.100.82' })).status, 200);
 });
 
 test('setting a first password needs a passkey made for it, not just a session', async t => {
@@ -468,7 +468,7 @@ test('removing the password needs proof made for it: the password itself or a pa
   assert.ok(h.audit().some(e => e.ev === 'auth.proof.fail' && e.act === 'password-remove' && e.uid === 'u1' && e.msg === 'step-up-failed'));
   await refused(await stepUp(key, b64u(crypto.randomBytes(32))), 'passkey');
   // A sign-up's challenge, signed as if it were a sign-in's.
-  const reg = (await h.req('POST', '/api/register/options', { body: { name: 'Mallory' }, ip })).body;
+  const reg = (await h.req('POST', '/api/register/options', { body: { adult: true, name: 'Mallory' }, ip })).body;
   await refused({ cid: reg.cid, credential: key.assertion(reg.options.challenge) }, 'passkey');
   // A proof that already signed someone in.
   const spent = await stepUp(key);
@@ -566,7 +566,7 @@ test('a pending reset keeps the name: nobody can take it until the code is used 
   const { code } = (await h.req('POST', '/api/admin/user/password-reset', { body: { id: 'u1' }, cookie: admin, ip })).body;
 
   // Registering the name, and another profile of that name setting a first password, are refused.
-  const squat = await h.req('POST', '/api/register/password', { body: { name: 'ana', password: GOOD }, ip });
+  const squat = await h.req('POST', '/api/register/password', { body: { adult: true, name: 'ana', password: GOOD }, ip });
   assert.equal(squat.status, 409);
   assert.equal(squat.body.code, 'name-taken');
   const other = `gymsid=${mintSession('u2')}`;
@@ -584,14 +584,14 @@ test('a pending reset keeps the name: nobody can take it until the code is used 
   assert.equal(h.db().users.filter(u => u.pw && u.name.trim().toLowerCase() === 'ana').length, 1);
 
   // An expired code holds nothing: that name is free.
-  assert.equal((await h.req('POST', '/api/register/password', { body: { name: 'cleo', password: GOOD }, ip })).status, 200);
+  assert.equal((await h.req('POST', '/api/register/password', { body: { adult: true, name: 'cleo', password: GOOD }, ip })).status, 200);
 });
 
 test('registering a name while its reset code is redeemed leaves one password holder, the reset profile', async t => {
   const h = await startServer(t, { env: { ADMIN_UIDS: 'adm' }, users: [user('adm', 'Root'), withPassword('u1', 'Bob')] });
   const { code } = (await h.req('POST', '/api/admin/user/password-reset', { body: { id: 'u1' }, cookie: `gymsid=${mintSession('adm')}`, ip: '198.51.100.241' })).body;
   const [reg, redeem] = await Promise.all([
-    h.req('POST', '/api/register/password', { body: { name: 'BOB', password: GOOD }, ip: '198.51.100.242' }),
+    h.req('POST', '/api/register/password', { body: { adult: true, name: 'BOB', password: GOOD }, ip: '198.51.100.242' }),
     h.req('POST', '/api/login/password-reset', { body: { name: 'bob', code, next: 'a brand new passphrase' }, ip: '198.51.100.243' })
   ]);
   assert.equal(redeem.status, 200);

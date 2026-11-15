@@ -37,6 +37,11 @@ import { startAdminSocket } from './admin-socket.js';
 import { createMediaStore, mediaLimits, mediaConfig, MediaError, HASH_RE } from './media.js';
 import { effectiveRoutineId } from './queue.js';
 import { assignPlan, unassignPlan, assignedFor, assignedReport, dropAssigned } from './assigned-plan.js';
+import {
+  MAX_OPEN_INVITES, MAX_MOVE, isTrainer, canTrain, canSee, activeTrainer, effectiveTrainer, traineesOf, myTrainer, unassigned,
+  setTrainer, ackTrainer, clearTrainer, trainerLeaves, ownInvite, inviteRole, inviteLive, inviteGrants, openInvitesOf, inviteForTrainer,
+  traineeRow, traineeView
+} from './trainer.js';
 import { stampPut } from './sync-stamps.js';
 import { atomicWrite as durableWrite } from './durable.js';
 import { ipv6Groups, guardedLookup, pushEndpointError, MAX_PUSH_ENDPOINT } from './net-guard.js';
@@ -662,6 +667,39 @@ function requireOwner(req, res) {
   if (!isOwner(user)) { audit(req, 'admin.denied', { ok: false, user }); json(res, 403, { error: 'only the owner can do this' }); return null; }
   return user;
 }
+// Guards for /api/trainer/* (trainer.js, docs/dev/trainers.md). Someone who is not a trainer is
+// answered exactly as if the route did not exist.
+const NOT_FOUND = { error: 'not found' };
+function requireTrainer(req, res) {
+  const user = readSession(req);
+  if (!user) { json(res, 401, { error: 'not signed in' }); return null; }
+  if (!isTrainer(user)) { json(res, 404, NOT_FOUND); return null; }
+  return user;
+}
+// The one way to a trainee's record. Every route that takes a trainee id goes through it and
+// nothing else does: { trainer, trainee } when the caller trains that profile right now, or null
+// after replying. Not a trainer, no such id and somebody else's trainee all get the same 404, so
+// the answer never says whether an account exists. Asking for a real profile that is not theirs is
+// written to the activity log, the way a refused admin action is.
+function requireTrainee(req, res, id) {
+  const trainer = readSession(req);
+  if (!trainer) { json(res, 401, { error: 'not signed in' }); return null; }
+  const trainee = typeof id === 'string' && id ? db.users.find(x => x.id === id) || null : null;
+  if (!canTrain(trainer, trainee)) {
+    if (trainee && trainee.id !== trainer.id) audit(req, 'trainer.denied', { ok: false, user: trainer, target: trainee });
+    json(res, 404, NOT_FOUND);
+    return null;
+  }
+  return { trainer, trainee };
+}
+// The same for a POST, whose trainee id is in the body. The body of someone who is not a trainer
+// is never read.
+async function traineeOfBody(req, res) {
+  if (!requireTrainer(req, res)) return null;
+  const body = await readBody(req);
+  const pair = requireTrainee(req, res, typeof body.id === 'string' ? body.id : '');
+  return pair && { ...pair, body };
+}
 const expireCookie = name => `${name}=; Path=/; Max-Age=0; HttpOnly;${SECURE} SameSite=Lax`;
 function sessionCookie(user) {
   const fresh = `${COOKIE}=${makeSession(user, 'c')}; Path=/; Max-Age=${SESSION_DAYS * 86400}; HttpOnly;${SECURE} SameSite=Lax`;
@@ -1207,7 +1245,67 @@ function loginTarget(body) {
 const acctKey = u => 'acct:' + u.id;
 const passkeyCount = u => db.creds.filter(c => c.userId === u.id).length;
 // expiresAt only when the account has an end date: the app's bell warns the person before it comes.
-const publicUser = u => ({ id: u.id, name: u.name, admin: isAdmin(u), ...(isOwner(u) ? { owner: true } : {}), ...(u.expiresAt ? { expiresAt: u.expiresAt } : {}) });
+// trainer: they have trainees of their own to look after. myTrainer: who trains them, by name
+// only, and whether they have been shown it (`ack`); the trainer's id is never sent.
+const publicUser = u => {
+  const mine = myTrainer(db, u, isLocked);
+  return {
+    id: u.id, name: u.name, admin: isAdmin(u), ...(isOwner(u) ? { owner: true } : {}), ...(u.expiresAt ? { expiresAt: u.expiresAt } : {}),
+    ...(isTrainer(u) ? { trainer: true } : {}), ...(mine ? { myTrainer: mine } : {})
+  };
+};
+// For the admin's list: whether a profile is a trainer, who trains them right now (nobody when
+// that trainer is gone, demoted or locked out), and whether they have been told yet.
+function trainerFields(u, gone) {
+  const t = effectiveTrainer(db, u, isLocked);
+  const lost = gone.find(x => x.id === u.id);
+  return {
+    trainer: isTrainer(u), trainerId: t ? t.id : null, trainerName: t ? t.name : null,
+    ...(t && u.trainerAck !== t.id ? { trainerWaiting: true } : {}),
+    noTrainer: !!lost, ...(lost ? { noTrainerWhy: lost.why, hadTrainer: lost.trainerName } : {}),
+    ...(isTrainer(u) ? { trainees: traineesOf(db, u.id).length } : {})
+  };
+}
+// The fields of an invite both an admin and a trainer set: who it is for and, optionally, the
+// one address it works with. { error } (a reply body) when the address is not one.
+function inviteWho(body) {
+  const name = text(body.name || body.note).trim().slice(0, 60);
+  const hasEmail = typeof body.email === 'string' && body.email.trim() !== '';
+  const email = hasEmail ? normalizeEmail(body.email) : null;
+  if (hasEmail && !email) return { error: EMAIL_ERRORS.invalid };
+  return { note: name, ...(name ? { name } : {}), ...(email ? { email } : {}) };
+}
+// An invite that can still be used: unused, and not one a trainer made who can no longer act.
+const openInvite = code => (code && db.invites.find(i => i.code === code && !i.usedBy && !i.revoked && inviteLive(db, i, { isLocked, isAdmin }))) || null;
+function newInviteCode() {
+  // 16 hex chars = 64 bits, up from 8 chars / 32 bits. Passkey signup has no rate limiting by
+  // design (that's the reverse proxy's job) and /api/register/options tells a caller whether a
+  // code is good, so the code itself has to be the thing that isn't worth guessing. Codes already
+  // in db.json keep working — validation is an exact string compare, never a length or format check.
+  let code;
+  do { code = crypto.randomBytes(8).toString('hex').toUpperCase(); } while (db.invites.some(i => i.code === code));
+  return code;
+}
+// What an invite gives the profile that signs up with it: the code is burned, access may end
+// after its months, and the role and the trainer come from the stored invite (never from the
+// sign-up request). `seen`: the sign-up screen showed who the trainer is.
+function redeemInvite(user, inv, seen) {
+  user.invitedBy = inv.code; inv.usedBy = user.id; inv.usedAt = user.created;
+  if (inv.months > 0) user.expiresAt = addMonths(user.created, inv.months);
+  Object.assign(user, inviteGrants(db, inv, { isLocked, seen: seen === true }));
+}
+// Someone signing up under a trainer is told, before the account exists, who will see what. The
+// first try is answered with the trainer's name; the sign-up screen shows the line and sends the
+// same request again with trainerSeen. Only a holder of a good code ever gets this far.
+const TRAINER_SEES = 'your trainer and the admin can see your workouts, body weight and body measurements';
+function trainerConsent(inv, body) {
+  const t = inv && inv.trainerId ? activeTrainer(db, inv.trainerId, isLocked) : null;
+  if (!t) return { shown: false };
+  if (body.trainerSeen !== true) return { ask: { error: TRAINER_SEES, code: 'trainer-consent', trainer: text(t.name).slice(0, 40) } };
+  return { shown: true };
+}
+// The app is for adults: every sign-up confirms 18 or over.
+const ADULT = { error: 'confirm that you are 18 or older (update the app if it does not ask)', code: 'adult' };
 const POLICY_ERRORS = {
   'too-short': `the password needs at least ${MIN_LENGTH} characters`,
   'too-long': `the password can have at most ${MAX_LENGTH} characters`,
@@ -1352,6 +1450,8 @@ async function removeEmail(req, res, user, body) {
 // device links and live presence, and outside db.json their training history, any Coach
 // credential and their photos and videos. The admin's delete and the account's own both end here.
 function removeAccount(u) {
+  // A trainer's trainees keep the app and go to "no trainer"; the invites they handed out go.
+  trainerLeaves(db, u, 'deleted');
   db.users = db.users.filter(x => x.id !== u.id);
   db.creds = (db.creds || []).filter(c => c.userId !== u.id);
   db.subs = (db.subs || []).filter(x => x.userId !== u.id);
@@ -1420,19 +1520,24 @@ const passwordRoutes = {
     const body = await readBody(req);
     const name = text(body.name).trim().slice(0, 40);
     if (!name) return json(res, 400, { error: 'name required', code: 'missing' });
+    if (body.adult !== true) return json(res, 400, ADULT);
     const code = text(body.code).trim().toUpperCase();
-    const invite = () => db.invites.find(i => i.code === code && !i.usedBy && !i.revoked);
+    const invite = () => openInvite(code);
     if (INVITE_ONLY && addressPaused(req, res, 'signup')) return;
     if (INVITE_ONLY && !invite()) {
       audit(req, 'auth.register.denied', { ok: false, name, msg: 'invite-rejected' });
       strikeAddress(req, 'signup');
       return json(res, 403, { error: 'a valid invite code is required', code: 'invite' });
     }
-    if (INVITE_ONLY && !inviteEmailOk(invite(), body.email)) {
+    // A good code counts on an open instance too: the role and the trainer it carries apply.
+    const invited = !!invite();
+    if (!inviteEmailOk(invite(), body.email)) {
       audit(req, 'auth.register.denied', { ok: false, name, msg: 'invite-email' });
       strikeAddress(req, 'signup');
       return json(res, 403, INVITE_EMAIL);
     }
+    const consent = trainerConsent(invite(), body);
+    if (consent.ask) return json(res, 409, consent.ask);
     const problem = passwordProblem(body.password, name);
     if (problem) return policyError(res, problem);
     const taken = () => json(res, 409, { error: 'another profile already signs in with this name', code: 'name-taken' });
@@ -1457,17 +1562,14 @@ const passwordRoutes = {
     };
     if (email && addressPaused(req, res, 'email')) return;
     const h = await hashPassword(body.password);
-    let inv = null;
-    if (INVITE_ONLY) {
-      inv = invite();
-      if (!inv) {
-        audit(req, 'auth.register.fail', { ok: false, name, msg: 'invite-invalid' });
-        return json(res, 403, { error: 'invite code is no longer valid, ask for a new one', code: 'invite' });
-      }
-      if (!inviteEmailOk(inv, body.email)) {
-        audit(req, 'auth.register.fail', { ok: false, name, msg: 'invite-email' });
-        return json(res, 403, INVITE_EMAIL);
-      }
+    const inv = invite();
+    if ((INVITE_ONLY || invited) && !inv) {
+      audit(req, 'auth.register.fail', { ok: false, name, msg: 'invite-invalid' });
+      return json(res, 403, { error: 'invite code is no longer valid, ask for a new one', code: 'invite' });
+    }
+    if (!inviteEmailOk(inv, body.email)) {
+      audit(req, 'auth.register.fail', { ok: false, name, msg: 'invite-email' });
+      return json(res, 403, INVITE_EMAIL);
     }
     if (nameTaken(name)) {
       // No name in the row: it is an address, and the log keeps none (maskEmail is for owners).
@@ -1477,8 +1579,8 @@ const passwordRoutes = {
     // No await from here to the push: nothing can take the address between this check and it.
     if (email && emailTaken(email)) return emailRefused();
     const created = new Date().toISOString();
-    const user = { id: crypto.randomBytes(12).toString('base64url'), name, created, pw: { h, set: created }, ...(email ? { email } : {}) };
-    if (inv) { user.invitedBy = inv.code; inv.usedBy = user.id; inv.usedAt = created; if (inv.months > 0) user.expiresAt = addMonths(created, inv.months); }
+    const user = { id: crypto.randomBytes(12).toString('base64url'), name, created, adult: created, pw: { h, set: created }, ...(email ? { email } : {}) };
+    if (inv) redeemInvite(user, inv, consent.shown);
     claimFirstAdmin(req, user);
     db.users.push(user);
     saveDb();
@@ -2164,17 +2266,21 @@ const routes = {
     const body = await readBody(req);
     const name = text(body.name).trim().slice(0, 40);
     if (!name) return json(res, 400, { error: 'name required' });
+    if (body.adult !== true) return json(res, 400, ADULT);
     const code = text(body.code).trim().toUpperCase();
-    const openInvite = db.invites.find(i => i.code === code && !i.usedBy && !i.revoked);
-    if (INVITE_ONLY && !openInvite) {
+    const invite = openInvite(code);
+    if (INVITE_ONLY && !invite) {
       // The rejected code itself is never recorded — a near-miss guess in the log is a liability.
       audit(req, 'auth.register.denied', { ok: false, name, msg: 'invite-rejected' });
       return json(res, 403, { error: 'a valid invite code is required', code: 'invite' });
     }
-    if (INVITE_ONLY && !inviteEmailOk(openInvite, body.email)) {
+    // A good code counts on an open instance too: the role and the trainer it carries apply.
+    if (!inviteEmailOk(invite, body.email)) {
       audit(req, 'auth.register.denied', { ok: false, name, msg: 'invite-email' });
       return json(res, 403, INVITE_EMAIL);
     }
+    const consent = trainerConsent(invite, body);
+    if (consent.ask) return json(res, 409, consent.ask);
     const uid = crypto.randomBytes(12).toString('base64url');
     const options = await generateRegistrationOptions({
       rpName: RP_NAME, rpID: RP_ID,
@@ -2183,7 +2289,7 @@ const routes = {
       authenticatorSelection: { residentKey: 'required', userVerification: 'preferred' },
       excludeCredentials: []
     });
-    const cid = putChallenge({ kind: 'register', challenge: options.challenge, name, uid, code });
+    const cid = putChallenge({ kind: 'register', challenge: options.challenge, name, uid, code, adult: true, invited: !!invite, seen: consent.shown });
     json(res, 200, { cid, options });
   },
 
@@ -2218,16 +2324,15 @@ const routes = {
       return json(res, 409, { error: 'credential already registered' });
     }
     // Re-check the invite at the last moment (it may have been used/revoked since options), then burn it.
-    let invite = null;
-    if (INVITE_ONLY) {
-      invite = db.invites.find(i => i.code === c.code && !i.usedBy && !i.revoked);
-      if (!invite) {
-        audit(req, 'auth.register.fail', { ok: false, name: c.name, msg: 'invite-invalid' });
-        return json(res, 403, { error: 'invite code is no longer valid, ask for a new one', code: 'invite' });
-      }
+    const invite = openInvite(c.code);
+    if ((INVITE_ONLY || c.invited) && !invite) {
+      audit(req, 'auth.register.fail', { ok: false, name: c.name, msg: 'invite-invalid' });
+      return json(res, 403, { error: 'invite code is no longer valid, ask for a new one', code: 'invite' });
     }
-    const user = { id: c.uid, name: c.name, created: new Date().toISOString() };
-    if (invite) { user.invitedBy = invite.code; invite.usedBy = user.id; invite.usedAt = user.created; if (invite.months > 0) user.expiresAt = addMonths(user.created, invite.months); }
+    if (c.adult !== true) return json(res, 400, ADULT);
+    const created = new Date().toISOString();
+    const user = { id: c.uid, name: c.name, created, adult: created };
+    if (invite) redeemInvite(user, invite, c.seen);
     claimFirstAdmin(req, user);
     db.users.push(user);
     db.creds.push({
@@ -2791,6 +2896,7 @@ const routes = {
   // One row per user, cheap enough for a personal instance (reads each state file once).
   'GET /api/admin/users': async (req, res) => {
     if (!requireAdmin(req, res)) return;
+    const gone = unassigned(db, isLocked);
     const users = db.users.map(u => {
       const S = readState(u.id) || {};
       const workouts = records(S.workouts);
@@ -2803,12 +2909,14 @@ const routes = {
         lastSync: lastSyncOf(u, S),
         hasPush: db.subs.some(s => s.userId === u.id),
         live: livePresence(u.id),
+        ...trainerFields(u, gone),
         // The sign-in e-mail is an admin's to see (to hand out a reset code, to tell two
         // profiles apart), and only while the instance takes passwords at all.
         ...(PASSWORD_LOGIN ? { password: hasPassword(u), email: u.email || null } : {})
       };
     });
-    json(res, 200, { users, invite_only: INVITE_ONLY, ...(PASSWORD_LOGIN ? { password_login: true } : {}), now: Date.now() });
+    // unassigned: the banner, everyone who had a trainer and has none that can act now.
+    json(res, 200, { users, unassigned: gone, invite_only: INVITE_ONLY, ...(PASSWORD_LOGIN ? { password_login: true } : {}), now: Date.now() });
   },
 
   // Drill-down: full workout history + body-weight log for one user.
@@ -2825,7 +2933,8 @@ const routes = {
         // unused reset code is good.
         ...(PASSWORD_LOGIN ? { password: hasPassword(u), email: u.email || null, resetUntil: u.pwReset?.exp > Date.now() ? u.pwReset.exp : null } : {}),
         // Until when an unused recovery code is good (#584), on every instance.
-        recoveryUntil: recoveryLinkOf(db, u.id)?.exp || null
+        recoveryUntil: recoveryLinkOf(db, u.id)?.exp || null,
+        ...trainerFields(u, unassigned(db, isLocked))
       },
       unit: S.unit || 'kg',
       lastSync: lastSyncOf(u, S),
@@ -2940,27 +3049,22 @@ const routes = {
   'POST /api/admin/invites/new': async (req, res) => {
     const admin = requireAdmin(req, res); if (!admin) return;
     const body = await readBody(req);
-    let code;
-    // 16 hex chars = 64 bits, up from 8 chars / 32 bits. Passkey signup has no rate limiting by
-    // design (that's the reverse proxy's job) and /api/register/options tells a caller whether a
-    // code is good, so the code itself has to be the thing that isn't worth guessing. Codes already
-    // in db.json keep working — validation is an exact string compare, never a length or format check.
-    do { code = crypto.randomBytes(8).toString('hex').toUpperCase(); } while (db.invites.some(i => i.code === code));
     // Who it is for, their address (the code then only works with it) and how long they get after
     // signing up: a number of months, or none = indefinite. All optional here, so an older client
     // that only sends a note still works; the admin dashboard asks for all three.
-    const name = text(body.name || body.note).trim().slice(0, 60);
-    const hasEmail = typeof body.email === 'string' && body.email.trim() !== '';
-    const email = hasEmail ? normalizeEmail(body.email) : null;
-    if (hasEmail && !email) return json(res, 400, EMAIL_ERRORS.invalid);
+    const who = inviteWho(body);
+    if (who.error) return json(res, 400, who.error);
     const months = body.months === undefined || body.months === null || body.months === 'indefinite' ? null : Number(body.months);
     if (months !== null && !(Number.isInteger(months) && months >= 1 && months <= 120)) {
       return json(res, 400, { error: 'months must be a whole number from 1 to 120, or left out for indefinite', code: 'months' });
     }
-    const invite = { code, note: name, ...(name ? { name } : {}), ...(email ? { email } : {}), months, createdBy: admin.id, created: new Date().toISOString() };
+    // role 'trainer' makes the person a trainer; trainerId makes them that trainer's trainee.
+    const grants = inviteRole(admin, body, { as: 'admin', db, isLocked });
+    if (grants.error) return json(res, 400, { error: grants.error, code: 'role' });
+    const invite = { code: newInviteCode(), ...who, months, ...grants, createdBy: admin.id, created: new Date().toISOString() };
     db.invites.push(invite);
     saveDb();
-    audit(req, 'admin.invite.create', { user: admin, msg: code });
+    audit(req, 'admin.invite.create', { user: admin, msg: invite.code + (grants.role ? ' · trainer' : '') });
     json(res, 200, { invite });
   },
 
@@ -3030,6 +3134,163 @@ const routes = {
     if (!unassignPlan(db, u.id, text(body.aid))) return json(res, 404, { error: 'no such assigned plan' });
     saveDb();
     audit(req, 'admin.plan.remove', { user: admin, target: u });
+    json(res, 200, { ok: true });
+  },
+
+  /* ---------- trainers (trainer.js, docs/dev/trainers.md) ---------- */
+  // Make someone a trainer, or stop them being one. Their trainees then have no trainer at once
+  // (they keep the app and their plans) and the invites they handed out stop working.
+  'POST /api/admin/user/trainer-role': async (req, res) => {
+    const admin = requireAdmin(req, res); if (!admin) return;
+    const body = await readBody(req);
+    const u = db.users.find(x => x.id === text(body.id));
+    if (!u) return json(res, 404, { error: 'no such user' });
+    if (typeof body.trainer !== 'boolean') return json(res, 400, { error: 'trainer must be true or false' });
+    if (body.trainer && isLocked(u)) return json(res, 400, { error: 'enable the account first' });
+    let released = 0;
+    if (body.trainer) u.trainer = true;
+    else if (isTrainer(u)) { delete u.trainer; released = trainerLeaves(db, u, 'demoted'); }
+    saveDb();
+    audit(req, body.trainer ? 'admin.trainer.grant' : 'admin.trainer.revoke', { user: admin, target: u });
+    json(res, 200, { ok: true, id: u.id, trainer: isTrainer(u), released });
+  },
+
+  // Move one or many people to a trainer, or to nobody (trainerId null). All or nothing. Someone
+  // moved to a different trainer is told on their next open, and only then does that trainer see
+  // what they logged (trainerAck).
+  'POST /api/admin/user/trainer': async (req, res) => {
+    const admin = requireAdmin(req, res); if (!admin) return;
+    const body = await readBody(req);
+    const ids = Array.isArray(body.ids) ? body.ids : null;
+    if (!ids || !ids.length || ids.length > MAX_MOVE || !ids.every(x => typeof x === 'string' && x) || new Set(ids).size !== ids.length) {
+      return json(res, 400, { error: `ids must be a list of 1 to ${MAX_MOVE} different profiles` });
+    }
+    const people = ids.map(id => db.users.find(x => x.id === id));
+    if (people.some(u => !u)) return json(res, 404, { error: 'no such user' });
+    const none = body.trainerId === null;
+    const t = none ? null : activeTrainer(db, body.trainerId, isLocked);
+    if (!none && !t) return json(res, 400, { error: 'that profile is not an active trainer', code: 'trainer' });
+    if (t && ids.includes(t.id)) return json(res, 400, { error: 'a trainer cannot be their own trainee', code: 'self' });
+    for (const u of people) { if (t) setTrainer(u, t.id); else clearTrainer(u); }
+    saveDb();
+    for (const u of people) audit(req, 'admin.trainer.move', { user: admin, target: u, msg: t ? t.name : 'no trainer' });
+    json(res, 200, { ok: true, moved: people.length, trainerId: t ? t.id : null });
+  },
+
+  // A trainer's own people. Someone an admin moved here who has not opened the app since shows
+  // by name only (`waiting`).
+  'GET /api/trainer/trainees': async (req, res) => {
+    const me = requireTrainer(req, res); if (!me) return;
+    const trainees = traineesOf(db, me.id).map(u => {
+      const waiting = !canSee(me, u);
+      return traineeRow(u, waiting ? null : readState(u.id), assignedFor(db, u.id).length, waiting);
+    });
+    json(res, 200, { trainees, now: Date.now() });
+  },
+
+  'GET /api/trainer/trainee': async (req, res) => {
+    const pair = requireTrainee(req, res, new URL(req.url, 'http://x').searchParams.get('id')); if (!pair) return;
+    const { trainer, trainee } = pair;
+    const waiting = !canSee(trainer, trainee);
+    const S = waiting ? null : readState(trainee.id) || {};
+    json(res, 200, traineeView(trainee, S, assignedReport(db, trainee.id, waiting ? [] : records(S.workouts)), waiting));
+  },
+
+  // Give a trainee one of your routines, or send the same `aid` again to update what they have.
+  // Whose plan it is to change follows who trains them now, not who first sent it.
+  'POST /api/trainer/trainee/plan': async (req, res) => {
+    const p = await traineeOfBody(req, res); if (!p) return;
+    const entry = assignPlan(db, p.trainee.id, text(p.trainer.name).slice(0, 40), p.body, Date.now(), text(p.body.aid) || null);
+    if (entry.error) return json(res, 400, { error: entry.error });
+    saveDb();
+    audit(req, 'trainer.plan.assign', { user: p.trainer, target: p.trainee, msg: entry.routine.name });
+    json(res, 200, { ok: true, aid: entry.aid, at: entry.at });
+  },
+
+  'POST /api/trainer/trainee/plan/remove': async (req, res) => {
+    const p = await traineeOfBody(req, res); if (!p) return;
+    if (!unassignPlan(db, p.trainee.id, text(p.body.aid))) return json(res, 404, { error: 'no such assigned plan' });
+    saveDb();
+    audit(req, 'trainer.plan.remove', { user: p.trainer, target: p.trainee });
+    json(res, 200, { ok: true });
+  },
+
+  // The trainer lets a trainee go. They keep the app and the plans they were given, and show on
+  // the admin's "no trainer" list.
+  'POST /api/trainer/trainee/release': async (req, res) => {
+    const p = await traineeOfBody(req, res); if (!p) return;
+    clearTrainer(p.trainee, 'released', p.trainer.name);
+    saveDb();
+    audit(req, 'trainer.release', { user: p.trainer, target: p.trainee });
+    json(res, 200, { ok: true });
+  },
+
+  // The codes this trainer handed out, and nobody else's.
+  'GET /api/trainer/invites': async (req, res) => {
+    const me = requireTrainer(req, res); if (!me) return;
+    json(res, 200, { invites: db.invites.filter(i => ownInvite(i, me.id)).map(inviteForTrainer), max: MAX_OPEN_INVITES });
+  },
+
+  // A code for a new trainee of this trainer. `role`, `trainerId` and `months` in the request are
+  // not read: a trainer's invite is always a trainee of their own with no end date (an admin sets
+  // or extends one).
+  'POST /api/trainer/invites/new': async (req, res) => {
+    if (!requireTrainer(req, res)) return;
+    const body = await readBody(req);
+    const me = requireTrainer(req, res); if (!me) return;
+    const grants = inviteRole(me, body);
+    if (grants.error) return json(res, 404, NOT_FOUND);
+    const who = inviteWho(body);
+    if (who.error) return json(res, 400, who.error);
+    if (openInvitesOf(db, me.id).length >= MAX_OPEN_INVITES) {
+      return json(res, 400, { error: `you have ${MAX_OPEN_INVITES} unused invites: revoke one first`, code: 'invite-limit' });
+    }
+    const invite = { code: newInviteCode(), ...who, months: null, ...grants, createdBy: me.id, created: new Date().toISOString() };
+    db.invites.push(invite);
+    saveDb();
+    audit(req, 'trainer.invite.create', { user: me, msg: invite.code });
+    json(res, 200, { invite: inviteForTrainer(invite) });
+  },
+
+  // Only their own, only unused. Someone else's code is answered like one that does not exist.
+  'POST /api/trainer/invites/revoke': async (req, res) => {
+    if (!requireTrainer(req, res)) return;
+    const body = await readBody(req);
+    const me = requireTrainer(req, res); if (!me) return;
+    const code = text(body.code).toUpperCase();
+    const inv = db.invites.find(i => i.code === code && ownInvite(i, me.id));
+    if (!inv) return json(res, 404, { error: 'no such code' });
+    if (inv.usedBy) return json(res, 400, { error: 'already used, cannot revoke' });
+    db.invites = db.invites.filter(i => i !== inv);
+    saveDb();
+    audit(req, 'trainer.invite.revoke', { user: me, msg: inv.code });
+    json(res, 200, { ok: true });
+  },
+
+  // The trainee has been shown who their trainer is ("Your trainer is now ..."). From here that
+  // trainer sees their workouts, weight and measurements.
+  'POST /api/trainer/ack': async (req, res) => {
+    const user = readSession(req);
+    if (!user) return json(res, 401, { error: 'not signed in' });
+    const t = effectiveTrainer(db, user, isLocked);
+    if (t && user.trainerAck !== t.id) {
+      ackTrainer(user, t.id);
+      saveDb();
+      audit(req, 'trainer.ack', { user, target: t });
+    }
+    json(res, 200, { ok: true, myTrainer: myTrainer(db, user, isLocked) });
+  },
+
+  // The trainee leaves their trainer. The plans they were given stay with them.
+  'POST /api/trainer/leave': async (req, res) => {
+    const user = readSession(req);
+    if (!user) return json(res, 401, { error: 'not signed in' });
+    if (user.trainerId) {
+      const t = db.users.find(x => x.id === user.trainerId) || null;
+      clearTrainer(user, 'left', t ? t.name : null);
+      saveDb();
+      audit(req, 'trainer.leave', { user, ...(t ? { target: t } : {}) });
+    }
     json(res, 200, { ok: true });
   },
 

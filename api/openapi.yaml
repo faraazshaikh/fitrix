@@ -166,6 +166,12 @@ tags:
     description: Live-workout presence heartbeat
   - name: admin
     description: Admin dashboard. Requires an admin session (`ADMIN_UIDS` or `admin:true`)
+  - name: trainer
+    description: >-
+      Trainers and their trainees (docs/dev/trainers.md). A trainer reaches only the profiles
+      an invite of theirs or an admin put under them. To anyone who is not a trainer, and for
+      any profile that is not the caller's trainee, these routes answer `404 not found`, the
+      same as for an id that does not exist.
   - name: media
     description: >-
       The photo, GIF or video of a user's own custom exercise, and the photos and videos
@@ -380,9 +386,18 @@ paths:
                 code:
                   type: string
                   description: >-
-                    Invite code, required (and validated) only when the instance
-                    runs with INVITE_ONLY. Compared case-insensitively.
-            example: { name: "Ada", code: "3F9C21A07B54D688" }
+                    Invite code, required only when the instance runs with INVITE_ONLY.
+                    Compared case-insensitively. A good code always applies: the role and the
+                    trainer the invite carries come from it, never from this request.
+                adult:
+                  type: boolean
+                  description: 'Must be `true`: the person confirms they are 18 or older.'
+                trainerSeen:
+                  type: boolean
+                  description: >-
+                    Send `true` after showing the line a `409 trainer-consent` answer carries
+                    (who their trainer is and what that trainer can see).
+            example: { name: "Ada", code: "3F9C21A07B54D688", adult: true }
       responses:
         '200':
           description: Ceremony options.
@@ -397,11 +412,21 @@ paths:
                   options:
                     $ref: '#/components/schemas/WebAuthnRegistrationOptions'
         '400':
-          description: '`name` missing/empty.'
+          description: '`name` missing/empty, or `adult` is not `true` (code `adult`).'
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
               example: { error: "name required" }
+        '409':
+          description: >-
+            `trainer-consent`: the invite puts the new profile under a trainer. Show the person
+            who (`trainer`, a name) and that the trainer and the admin can see their workouts,
+            body weight and body measurements, then send the same request with
+            `trainerSeen: true`.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { error: "your trainer and the admin can see your workouts, body weight and body measurements", code: "trainer-consent", trainer: "Tara" }
         '403':
           description: Instance is invite-only and the code is missing, used, or revoked.
           content:
@@ -1053,9 +1078,11 @@ paths:
               properties:
                 name: { type: string, maxLength: 40 }
                 password: { type: string, minLength: 10, maxLength: 256 }
-                code: { type: string, description: Invite code (INVITE_ONLY only). }
+                code: { type: string, description: 'Invite code: required with INVITE_ONLY, and a good one always applies (its role and trainer).' }
                 email: { type: string, maxLength: 254, description: Optional sign-in e-mail. }
-            example: { name: "Ada", password: "correct horse battery staple", code: "3F9C21A07B54D688" }
+                adult: { type: boolean, description: 'Must be `true`: the person confirms they are 18 or older (else `400 adult`).' }
+                trainerSeen: { type: boolean, description: 'Send `true` after showing the line a `409 trainer-consent` answer carries (see /api/register/options).' }
+            example: { name: "Ada", password: "correct horse battery staple", code: "3F9C21A07B54D688", adult: true }
       responses:
         '200':
           description: Registered and signed in. The session cookie is set.
@@ -3027,6 +3054,394 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
 
+  /api/admin/user/trainer-role:
+    post:
+      tags: [admin]
+      operationId: adminUserTrainerRole
+      summary: 'Admin: make someone a trainer, or stop them being one'
+      description: |
+        A trainer can invite trainees and see and plan for their own trainees only. Removing
+        the role takes effect on that person's next request: their trainees keep the app and
+        their plans, show as having no trainer, and the unused invites the trainer made are
+        dropped. Audited.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id, trainer]
+              properties:
+                id: { type: string, description: The user id. }
+                trainer: { type: boolean }
+      responses:
+        '200':
+          description: Done.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, const: true }
+                  id: { type: string }
+                  trainer: { type: boolean }
+                  released: { type: integer, description: How many trainees were left without a trainer. }
+        '400':
+          description: '`trainer` is not a boolean, or the account is disabled or expired.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: No user with that id.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/admin/user/trainer:
+    post:
+      tags: [admin]
+      operationId: adminUserTrainer
+      summary: 'Admin: move people to a trainer, or to none'
+      description: |
+        Moves one or many profiles at once, all or nothing. `trainerId: null` leaves them with
+        no trainer. Someone moved to a different trainer is told on their next open; until
+        then the new trainer sees their name only. Audited, one row per person.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids, trainerId]
+              properties:
+                ids: { type: array, items: { type: string }, minItems: 1, maxItems: 200, description: The user ids to move. }
+                trainerId:
+                  oneOf: [{ type: string }, { type: 'null' }]
+                  description: An active trainer who is not one of `ids`, or null.
+      responses:
+        '200':
+          description: Moved.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, const: true }
+                  moved: { type: integer }
+                  trainerId: { oneOf: [{ type: string }, { type: 'null' }] }
+        '400':
+          description: The list is not usable, the target is not an active trainer (`trainer`), or is one of the people moved (`self`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: One of the ids is no user.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/trainer/trainees:
+    get:
+      tags: [trainer]
+      operationId: trainerTrainees
+      summary: 'Trainer: my trainees'
+      description: |
+        Each row has `id`, `name`, `plans` (how many assigned plans they hold) and, once the
+        trainee has been told who trains them, `lastWorkout`, `lastSync` and `expiresAt`. A
+        trainee who has not been told yet has `waiting: true` and nothing they logged.
+      responses:
+        '200':
+          description: The list.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  trainees: { type: array, items: { type: object } }
+                  now: { type: integer }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404':
+          description: The caller is not a trainer.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/trainer/trainee:
+    get:
+      tags: [trainer]
+      operationId: trainerTrainee
+      summary: 'Trainer: one trainee'
+      description: |
+        What a trainer sees of a trainee, and nothing else: `user` (id, name, created,
+        expiresAt), `unit`, `lengthUnit`, `lastSync`, `lastWorkout`, `routines` (names and
+        counts), `assigned` (plans and whether they were trained), `workouts` (without photos,
+        videos or heart rate), `bodyweight` and `measurements`. Never the e-mail, sign-in
+        details, progress photos or Coach chats. While the trainee has not been told
+        (`waiting: true`) only the name and the plans handed out are returned.
+      parameters:
+        - { name: id, in: query, required: true, schema: { type: string }, description: The trainee's user id. }
+      responses:
+        '200':
+          description: The trainee.
+          content:
+            application/json:
+              schema: { type: object }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404':
+          description: Not a trainer, no such profile, or not the caller's trainee. One answer for all three.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { error: "not found" }
+
+  /api/trainer/trainee/plan:
+    post:
+      tags: [trainer]
+      operationId: trainerTraineePlan
+      summary: 'Trainer: give a trainee a plan, or update one they have'
+      description: |
+        The same as `POST /api/admin/user/plan`, for the caller's own trainee. Any plan the
+        trainee holds can be updated by whoever trains them now. Audited.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id, routine]
+              properties:
+                id: { type: string, description: The trainee's user id. }
+                aid: { type: string, description: An assigned plan to replace. }
+                routine: { type: object, description: 'The routine: `name`, `emoji`, `ex`.' }
+                customEx: { type: array, items: { type: object } }
+      responses:
+        '200':
+          description: Assigned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, const: true }
+                  aid: { type: string }
+                  at: { type: string }
+        '400':
+          description: Not a usable routine, or the person already has the most plans.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404':
+          description: Not a trainer, no such profile, or not the caller's trainee. One answer for all three.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { error: "not found" }
+
+  /api/trainer/trainee/plan/remove:
+    post:
+      tags: [trainer]
+      operationId: trainerTraineePlanRemove
+      summary: 'Trainer: take a plan back from a trainee'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id, aid]
+              properties:
+                id: { type: string, description: The trainee's user id. }
+                aid: { type: string, description: The assigned plan. }
+      responses:
+        '200':
+          description: Done.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, const: true }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404':
+          description: Not a trainer, no such profile, or not the caller's trainee. One answer for all three.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { error: "not found" }
+
+  /api/trainer/trainee/release:
+    post:
+      tags: [trainer]
+      operationId: trainerTraineeRelease
+      summary: 'Trainer: let a trainee go'
+      description: |
+        The trainee keeps the app and the plans they were given, and shows on the admin's
+        "no trainer" list. Audited.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id: { type: string, description: The trainee's user id. }
+      responses:
+        '200':
+          description: Done.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, const: true }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404':
+          description: Not a trainer, no such profile, or not the caller's trainee. One answer for all three.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { error: "not found" }
+
+  /api/trainer/invites:
+    get:
+      tags: [trainer]
+      operationId: trainerInvites
+      summary: 'Trainer: the invite codes I made'
+      description: Only the caller's own. Each has `code`, `name`, `email` (when tied to one), `created`, `used` and `usedAt`.
+      responses:
+        '200':
+          description: The list.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invites: { type: array, items: { type: object } }
+                  max: { type: integer, description: Unused invites a trainer can have at a time. }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404':
+          description: The caller is not a trainer.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/trainer/invites/new:
+    post:
+      tags: [trainer]
+      operationId: trainerInviteNew
+      summary: 'Trainer: make an invite code for a new trainee'
+      description: |
+        Whoever signs up with the code becomes the caller's trainee. `role`, `trainerId` and
+        `months` in the request are not read: a trainer cannot make a trainer, bind an invite
+        to someone else, or set an end date. At most 25 unused at a time. Audited.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, maxLength: 60, description: Who the invite is for. }
+                email: { type: string, description: When set, the code only works with this address. }
+      responses:
+        '200':
+          description: The new invite.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invite: { type: object }
+        '400':
+          description: The email is not valid, or 25 invites are unused already (`invite-limit`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404':
+          description: The caller is not a trainer.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/trainer/invites/revoke:
+    post:
+      tags: [trainer]
+      operationId: trainerInviteRevoke
+      summary: 'Trainer: revoke an unused invite code of mine'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code: { type: string }
+      responses:
+        '200':
+          description: Done.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, const: true }
+        '400':
+          description: Already used.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404':
+          description: Not a trainer, or no such code among the caller's own.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/trainer/ack:
+    post:
+      tags: [trainer]
+      operationId: trainerAck
+      summary: 'Trainee: I have been shown who my trainer is'
+      description: |
+        Sent by the app after showing "Your trainer is now ...". From then on that trainer
+        sees the caller's workouts, body weight and body measurements. Safe to repeat.
+      responses:
+        '200':
+          description: Recorded.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, const: true }
+                  myTrainer: { oneOf: [{ type: object }, { type: 'null' }] }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/trainer/leave:
+    post:
+      tags: [trainer]
+      operationId: trainerLeave
+      summary: 'Trainee: leave my trainer'
+      description: The plans the caller was given stay. Audited.
+      responses:
+        '200':
+          description: Done.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, const: true }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
   /api/assigned:
     get:
       tags: [data]
@@ -3233,6 +3648,13 @@ paths:
                   description: >-
                     How many months of access they get, counted from sign-up. Left out or
                     null means indefinite (until an admin removes or disables the account).
+                role:
+                  type: string
+                  enum: [trainee, trainer]
+                  description: '`trainer` makes the person who signs up a trainer. Left out means `trainee`.'
+                trainerId:
+                  type: string
+                  description: The new profile becomes this trainer's trainee. Must be an active trainer.
       responses:
         '200':
           description: The new invite.
@@ -3243,7 +3665,7 @@ paths:
                 properties:
                   invite: { $ref: '#/components/schemas/Invite' }
         '400':
-          description: The email or the months value is not valid.
+          description: The email, the months value, the role or the trainer is not valid.
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
@@ -4260,6 +4682,16 @@ components:
         name: { type: string }
         owner: { type: boolean, description: Present (true) only for the instance owner. }
         admin: { type: boolean }
+        expiresAt: { type: string, description: Present only when the account has an end date. }
+        trainer: { type: boolean, description: Present (true) only for a trainer. }
+        myTrainer:
+          type: object
+          description: >-
+            Present only for someone who has a trainer right now: the trainer's name, and
+            whether this person has been shown it (`ack`). Never the trainer's id.
+          properties:
+            name: { type: string }
+            ack: { type: boolean }
       example: { id: "Zk3q9XyPbA2LmN0v", name: "Ada", admin: false }
 
     # ------------------------------------------------------------------ WebAuthn
@@ -4759,7 +5191,9 @@ components:
         months:
           oneOf: [{ type: integer }, { type: 'null' }]
           description: Months of access from sign-up; null means indefinite.
-        createdBy: { type: string, description: Admin user id. }
+        createdBy: { type: string, description: User id of the admin or trainer who made it. }
+        role: { type: string, description: 'Present (`trainer`) only on an invite that makes a trainer.' }
+        trainerId: { type: string, description: 'Present when the new profile becomes that trainer''s trainee.' }
         created: { type: string, description: ISO timestamp. }
         usedBy:
           oneOf: [{ type: string }, { type: 'null' }]

@@ -115,9 +115,9 @@ const user = (id, name, extra = {}) => ({ id, name, created: new Date().toISOStr
 const withPassword = (id, name) => user(id, name, { pw: { h: pwHash, set: new Date().toISOString() } });
 
 
-const registerPassword = (h, name, ip) => h.req('POST', '/api/register/password', { body: { name, password: GOOD }, ip });
+const registerPassword = (h, name, ip) => h.req('POST', '/api/register/password', { body: { adult: true, name, password: GOOD }, ip });
 async function registerPasskey(h, name, ip) {
-  const opt = await h.req('POST', '/api/register/options', { body: { name }, ip });
+  const opt = await h.req('POST', '/api/register/options', { body: { adult: true, name }, ip });
   assert.equal(opt.status, 200);
   return h.req('POST', '/api/register/verify', { body: { cid: opt.body.cid, credential: softPasskey().attestation(opt.body.options.challenge) }, ip });
 }

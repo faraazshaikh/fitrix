@@ -225,6 +225,7 @@ main.api-main .lead { color: var(--fg-2); max-width: 58ch; margin: 14px 0 0; fon
   <a class="side-link" href="#coach"><b>AI Coach</b><span>Plans, reviews, debriefs</span></a>
   <a class="side-link" href="#integrations"><b>Integrations</b><span>Webhooks (INTEGRATIONS)</span></a>
   <a class="side-link" href="#admin"><b>Admin</b><span>Users, invites, audit log, Coach</span></a>
+  <a class="side-link" href="#trainer"><b>Trainers</b><span>A trainer and their own trainees</span></a>
   <a class="side-link" href="#schemas"><b>Schemas</b><span>The state blob, the error shape &amp; co.</span></a>
   <p class="side-label">More</p>
   <a class="side-link" href="/"><b>Home</b><span>The tour, the demo, the download</span></a>
@@ -247,7 +248,7 @@ main.api-main .lead { color: var(--fg-2); max-width: 58ch; margin: 14px 0 0; fon
   <p class="api-facts">
     <span>OpenAPI 3.1.0</span>
     <span>openGym v1.4.3</span>
-    <span>96 endpoints</span>
+    <span>108 endpoints</span>
     <span>AGPL-3.0-or-later</span>
   </p>
 
@@ -405,12 +406,23 @@ main.api-main .lead { color: var(--fg-2); max-width: 58ch; margin: 14px 0 0; fon
   <div class="prow">
     <span class="p-name">code</span>
     <span class="p-type">string</span>
-    <span class="p-desc">Invite code, required (and validated) only when the instance runs with INVITE_ONLY. Compared case-insensitively.</span>
+    <span class="p-desc">Invite code, required only when the instance runs with INVITE_ONLY. Compared case-insensitively. A good code always applies: the role and the trainer the invite carries come from it, never from this request.</span>
+  </div>
+  <div class="prow">
+    <span class="p-name">adult</span>
+    <span class="p-type">boolean</span>
+    <span class="p-desc">Must be <code>true</code>: the person confirms they are 18 or older.</span>
+  </div>
+  <div class="prow">
+    <span class="p-name">trainerSeen</span>
+    <span class="p-type">boolean</span>
+    <span class="p-desc">Send <code>true</code> after showing the line a <code>409 trainer-consent</code> answer carries (who their trainer is and what that trainer can see).</span>
   </div>
 </div>
 <pre><code>{
   &quot;name&quot;: &quot;Ada&quot;,
-  &quot;code&quot;: &quot;3F9C21A07B54D688&quot;
+  &quot;code&quot;: &quot;3F9C21A07B54D688&quot;,
+  &quot;adult&quot;: true
 }</code></pre>
     <p class="ep-h">Responses</p>
     <div class="ptab">
@@ -420,11 +432,15 @@ main.api-main .lead { color: var(--fg-2); max-width: 58ch; margin: 14px 0 0; fon
   </div>
   <div class="prow rrow">
     <span class="r-code s4">400</span>
-    <span class="p-desc"><code>name</code> missing/empty.<span class="r-sig"><code>{&quot;error&quot;:&quot;name required&quot;}</code></span></span>
+    <span class="p-desc"><code>name</code> missing/empty, or <code>adult</code> is not <code>true</code> (code <code>adult</code>).<span class="r-sig"><code>{&quot;error&quot;:&quot;name required&quot;}</code></span></span>
   </div>
   <div class="prow rrow">
     <span class="r-code s4">403</span>
     <span class="p-desc">Instance is invite-only and the code is missing, used, or revoked.<span class="r-sig"><code>{&quot;error&quot;:&quot;a valid invite code is required&quot;}</code></span></span>
+  </div>
+  <div class="prow rrow">
+    <span class="r-code s4">409</span>
+    <span class="p-desc"><code>trainer-consent</code>: the invite puts the new profile under a trainer. Show the person who (<code>trainer</code>, a name) and that the trainer and the admin can see their workouts, body weight and body measurements, then send the same request with <code>trainerSeen: true</code>.<span class="r-sig"><code>{&quot;error&quot;:&quot;your trainer and the admin can see your workouts, body weight and body measurements&quot;}</code></span></span>
   </div>
     </div>
   </div>
@@ -1107,18 +1123,29 @@ main.api-main .lead { color: var(--fg-2); max-width: 58ch; margin: 14px 0 0; fon
   <div class="prow">
     <span class="p-name">code</span>
     <span class="p-type">string</span>
-    <span class="p-desc">Invite code (INVITE_ONLY only).</span>
+    <span class="p-desc">Invite code: required with INVITE_ONLY, and a good one always applies (its role and trainer).</span>
   </div>
   <div class="prow">
     <span class="p-name">email</span>
     <span class="p-type">string <span class="p-hint">(&le; 254 chars)</span></span>
     <span class="p-desc">Optional sign-in e-mail.</span>
   </div>
+  <div class="prow">
+    <span class="p-name">adult</span>
+    <span class="p-type">boolean</span>
+    <span class="p-desc">Must be <code>true</code>: the person confirms they are 18 or older (else <code>400 adult</code>).</span>
+  </div>
+  <div class="prow">
+    <span class="p-name">trainerSeen</span>
+    <span class="p-type">boolean</span>
+    <span class="p-desc">Send <code>true</code> after showing the line a <code>409 trainer-consent</code> answer carries (see /api/register/options).</span>
+  </div>
 </div>
 <pre><code>{
   &quot;name&quot;: &quot;Ada&quot;,
   &quot;password&quot;: &quot;correct horse battery staple&quot;,
-  &quot;code&quot;: &quot;3F9C21A07B54D688&quot;
+  &quot;code&quot;: &quot;3F9C21A07B54D688&quot;,
+  &quot;adult&quot;: true
 }</code></pre>
     <p class="ep-h">Responses</p>
     <div class="ptab">
@@ -3708,6 +3735,104 @@ main.api-main .lead { color: var(--fg-2); max-width: 58ch; margin: 14px 0 0; fon
   </div>
 </details>
 
+<details class="ep" id="op-adminUserTrainerRole">
+  <summary>
+    <span class="m post">POST</span>
+    <span class="ep-path"><code>/api/admin/user/trainer-role</code><span class="ep-chip admin">admin</span></span>
+    <span class="ep-chev" aria-hidden="true"></span>
+    <span class="ep-sum">Make someone a trainer, or stop them being one</span>
+  </summary>
+  <div class="ep-body">
+<p>A trainer can invite trainees and see and plan for their own trainees only. Removing the role takes effect on that person's next request: their trainees keep the app and their plans, show as having no trainer, and the unused invites the trainer made are dropped. Audited.</p>
+    <p class="ep-auth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>Admin only: a signed-in session whose user is an admin (<code>ADMIN_UIDS</code> or <code>admin:true</code>), as the session cookie or a Bearer token.</span></p>
+
+<p class="ep-h">Request body <span class="p-hint">(JSON)</span></p><div class="ptab">
+  <div class="prow">
+    <span class="p-name">id<em class="p-req" title="required">required</em></span>
+    <span class="p-type">string</span>
+    <span class="p-desc">The user id.</span>
+  </div>
+  <div class="prow">
+    <span class="p-name">trainer<em class="p-req" title="required">required</em></span>
+    <span class="p-type">boolean</span>
+    <span class="p-desc"></span>
+  </div>
+</div>
+    <p class="ep-h">Responses</p>
+    <div class="ptab">
+  <div class="prow rrow">
+    <span class="r-code s2">200</span>
+    <span class="p-desc">Done.<span class="r-sig">{ ok: always true, id: string, trainer: boolean, released: integer }</span></span>
+  </div>
+  <div class="prow rrow">
+    <span class="r-code s4">400</span>
+    <span class="p-desc"><code>trainer</code> is not a boolean, or the account is disabled or expired.</span>
+  </div>
+  <div class="prow rrow">
+    <span class="r-code s4">401</span>
+    <span class="p-desc">No session, expired/revoked session, or a disabled account.<span class="r-sig"><code>{&quot;error&quot;:&quot;not signed in&quot;}</code></span></span>
+  </div>
+  <div class="prow rrow">
+    <span class="r-code s4">403</span>
+    <span class="p-desc">Signed in, but not an admin. The attempt is recorded in the audit log.<span class="r-sig"><code>{&quot;error&quot;:&quot;forbidden&quot;}</code></span></span>
+  </div>
+  <div class="prow rrow">
+    <span class="r-code s4">404</span>
+    <span class="p-desc">No user with that id.</span>
+  </div>
+    </div>
+  </div>
+</details>
+
+<details class="ep" id="op-adminUserTrainer">
+  <summary>
+    <span class="m post">POST</span>
+    <span class="ep-path"><code>/api/admin/user/trainer</code><span class="ep-chip admin">admin</span></span>
+    <span class="ep-chev" aria-hidden="true"></span>
+    <span class="ep-sum">Move people to a trainer, or to none</span>
+  </summary>
+  <div class="ep-body">
+<p>Moves one or many profiles at once, all or nothing. <code>trainerId: null</code> leaves them with no trainer. Someone moved to a different trainer is told on their next open; until then the new trainer sees their name only. Audited, one row per person.</p>
+    <p class="ep-auth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>Admin only: a signed-in session whose user is an admin (<code>ADMIN_UIDS</code> or <code>admin:true</code>), as the session cookie or a Bearer token.</span></p>
+
+<p class="ep-h">Request body <span class="p-hint">(JSON)</span></p><div class="ptab">
+  <div class="prow">
+    <span class="p-name">ids<em class="p-req" title="required">required</em></span>
+    <span class="p-type">string[]</span>
+    <span class="p-desc">The user ids to move.</span>
+  </div>
+  <div class="prow">
+    <span class="p-name">trainerId<em class="p-req" title="required">required</em></span>
+    <span class="p-type">string | null</span>
+    <span class="p-desc">An active trainer who is not one of <code>ids</code>, or null.</span>
+  </div>
+</div>
+    <p class="ep-h">Responses</p>
+    <div class="ptab">
+  <div class="prow rrow">
+    <span class="r-code s2">200</span>
+    <span class="p-desc">Moved.<span class="r-sig">{ ok: always true, moved: integer, trainerId: string | null }</span></span>
+  </div>
+  <div class="prow rrow">
+    <span class="r-code s4">400</span>
+    <span class="p-desc">The list is not usable, the target is not an active trainer (<code>trainer</code>), or is one of the people moved (<code>self</code>).</span>
+  </div>
+  <div class="prow rrow">
+    <span class="r-code s4">401</span>
+    <span class="p-desc">No session, expired/revoked session, or a disabled account.<span class="r-sig"><code>{&quot;error&quot;:&quot;not signed in&quot;}</code></span></span>
+  </div>
+  <div class="prow rrow">
+    <span class="r-code s4">403</span>
+    <span class="p-desc">Signed in, but not an admin. The attempt is recorded in the audit log.<span class="r-sig"><code>{&quot;error&quot;:&quot;forbidden&quot;}</code></span></span>
+  </div>
+  <div class="prow rrow">
+    <span class="r-code s4">404</span>
+    <span class="p-desc">One of the ids is no user.</span>
+  </div>
+    </div>
+  </div>
+</details>
+
 <details class="ep" id="op-adminUserDelete">
   <summary>
     <span class="m post">POST</span>
@@ -3907,6 +4032,16 @@ main.api-main .lead { color: var(--fg-2); max-width: 58ch; margin: 14px 0 0; fon
     <span class="p-type">integer <span class="p-hint">(1&ndash;120)</span> | null</span>
     <span class="p-desc">How many months of access they get, counted from sign-up. Left out or null means indefinite (until an admin removes or disables the account).</span>
   </div>
+  <div class="prow">
+    <span class="p-name">role</span>
+    <span class="p-type">&quot;trainee&quot; | &quot;trainer&quot;</span>
+    <span class="p-desc"><code>trainer</code> makes the person who signs up a trainer. Left out means <code>trainee</code>.</span>
+  </div>
+  <div class="prow">
+    <span class="p-name">trainerId</span>
+    <span class="p-type">string</span>
+    <span class="p-desc">The new profile becomes this trainer's trainee. Must be an active trainer.</span>
+  </div>
 </div>
     <p class="ep-h">Responses</p>
     <div class="ptab">
@@ -3916,7 +4051,7 @@ main.api-main .lead { color: var(--fg-2); max-width: 58ch; margin: 14px 0 0; fon
   </div>
   <div class="prow rrow">
     <span class="r-code s4">400</span>
-    <span class="p-desc">The email or the months value is not valid.</span>
+    <span class="p-desc">The email, the months value, the role or the trainer is not valid.</span>
   </div>
   <div class="prow rrow">
     <span class="r-code s4">401</span>
@@ -4334,6 +4469,378 @@ main.api-main .lead { color: var(--fg-2); max-width: 58ch; margin: 14px 0 0; fon
   </div>
 </section>
 
+<section class="api-sec" id="trainer">
+  <h2>Trainers</h2>
+  <p class="sub">Trainers and their trainees (docs/dev/trainers.md). A trainer reaches only the profiles an invite of theirs or an admin put under them. To anyone who is not a trainer, and for any profile that is not the caller's trainee, these routes answer <code>404 not found</code>, the same as for an id that does not exist.</p>
+  <div class="eps">
+
+<details class="ep" id="op-trainerTrainees">
+  <summary>
+    <span class="m get">GET</span>
+    <span class="ep-path"><code>/api/trainer/trainees</code></span>
+    <span class="ep-chev" aria-hidden="true"></span>
+    <span class="ep-sum">Trainer: my trainees</span>
+  </summary>
+  <div class="ep-body">
+<p>Each row has <code>id</code>, <code>name</code>, <code>plans</code> (how many assigned plans they hold) and, once the trainee has been told who trains them, <code>lastWorkout</code>, <code>lastSync</code> and <code>expiresAt</code>. A trainee who has not been told yet has <code>waiting: true</code> and nothing they logged.</p>
+    <p class="ep-auth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>Requires a session: the cookie set at sign-in, or <code>Authorization: Bearer &lt;token&gt;</code> from mobile-app pairing.</span></p>
+
+
+    <p class="ep-h">Responses</p>
+    <div class="ptab">
+  <div class="prow rrow">
+    <span class="r-code s2">200</span>
+    <span class="p-desc">The list.<span class="r-sig">{ trainees: object[], now: integer }</span></span>
+  </div>
+  <div class="prow rrow">
+    <span class="r-code s4">401</span>
+    <span class="p-desc">No session, expired/revoked session, or a disabled account.<span class="r-sig"><code>{&quot;error&quot;:&quot;not signed in&quot;}</code></span></span>
+  </div>
+  <div class="prow rrow">
+    <span class="r-code s4">404</span>
+    <span class="p-desc">The caller is not a trainer.</span>
+  </div>
+    </div>
+  </div>
+</details>
+
+<details class="ep" id="op-trainerTrainee">
+  <summary>
+    <span class="m get">GET</span>
+    <span class="ep-path"><code>/api/trainer/trainee</code></span>
+    <span class="ep-chev" aria-hidden="true"></span>
+    <span class="ep-sum">Trainer: one trainee</span>
+  </summary>
+  <div class="ep-body">
+<p>What a trainer sees of a trainee, and nothing else: <code>user</code> (id, name, created, expiresAt), <code>unit</code>, <code>lengthUnit</code>, <code>lastSync</code>, <code>lastWorkout</code>, <code>routines</code> (names and counts), <code>assigned</code> (plans and whether they were trained), <code>workouts</code> (without photos, videos or heart rate), <code>bodyweight</code> and <code>measurements</code>. Never the e-mail, sign-in details, progress photos or Coach chats. While the trainee has not been told (<code>waiting: true</code>) only the name and the plans handed out are returned.</p>
+    <p class="ep-auth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>Requires a session: the cookie set at sign-in, or <code>Authorization: Bearer &lt;token&gt;</code> from mobile-app pairing.</span></p>
+<p class="ep-h">Query parameters</p><div class="ptab">
+  <div class="prow">
+    <span class="p-name">id<em class="p-req" title="required">required</em></span>
+    <span class="p-type">string</span>
+    <span class="p-desc">The trainee's user id.</span>
+  </div>
+</div>
+
+    <p class="ep-h">Responses</p>
+    <div class="ptab">
+  <div class="prow rrow">
+    <span class="r-code s2">200</span>
+    <span class="p-desc">The trainee.<span class="r-sig">object</span></span>
+  </div>
+  <div class="prow rrow">
+    <span class="r-code s4">401</span>
+    <span class="p-desc">No session, expired/revoked session, or a disabled account.<span class="r-sig"><code>{&quot;error&quot;:&quot;not signed in&quot;}</code></span></span>
+  </div>
+  <div class="prow rrow">
+    <span class="r-code s4">404</span>
+    <span class="p-desc">Not a trainer, no such profile, or not the caller's trainee. One answer for all three.<span class="r-sig"><code>{&quot;error&quot;:&quot;not found&quot;}</code></span></span>
+  </div>
+    </div>
+  </div>
+</details>
+
+<details class="ep" id="op-trainerTraineePlan">
+  <summary>
+    <span class="m post">POST</span>
+    <span class="ep-path"><code>/api/trainer/trainee/plan</code></span>
+    <span class="ep-chev" aria-hidden="true"></span>
+    <span class="ep-sum">Trainer: give a trainee a plan, or update one they have</span>
+  </summary>
+  <div class="ep-body">
+<p>The same as <code>POST /api/admin/user/plan</code>, for the caller's own trainee. Any plan the trainee holds can be updated by whoever trains them now. Audited.</p>
+    <p class="ep-auth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>Requires a session: the cookie set at sign-in, or <code>Authorization: Bearer &lt;token&gt;</code> from mobile-app pairing.</span></p>
+
+<p class="ep-h">Request body <span class="p-hint">(JSON)</span></p><div class="ptab">
+  <div class="prow">
+    <span class="p-name">id<em class="p-req" title="required">required</em></span>
+    <span class="p-type">string</span>
+    <span class="p-desc">The trainee's user id.</span>
+  </div>
+  <div class="prow">
+    <span class="p-name">aid</span>
+    <span class="p-type">string</span>
+    <span class="p-desc">An assigned plan to replace.</span>
+  </div>
+  <div class="prow">
+    <span class="p-name">routine<em class="p-req" title="required">required</em></span>
+    <span class="p-type">object</span>
+    <span class="p-desc">The routine: <code>name</code>, <code>emoji</code>, <code>ex</code>.</span>
+  </div>
+  <div class="prow">
+    <span class="p-name">customEx</span>
+    <span class="p-type">object[]</span>
+    <span class="p-desc"></span>
+  </div>
+</div>
+    <p class="ep-h">Responses</p>
+    <div class="ptab">
+  <div class="prow rrow">
+    <span class="r-code s2">200</span>
+    <span class="p-desc">Assigned.<span class="r-sig">{ ok: always true, aid: string, at: string }</span></span>
+  </div>
+  <div class="prow rrow">
+    <span class="r-code s4">400</span>
+    <span class="p-desc">Not a usable routine, or the person already has the most plans.</span>
+  </div>
+  <div class="prow rrow">
+    <span class="r-code s4">401</span>
+    <span class="p-desc">No session, expired/revoked session, or a disabled account.<span class="r-sig"><code>{&quot;error&quot;:&quot;not signed in&quot;}</code></span></span>
+  </div>
+  <div class="prow rrow">
+    <span class="r-code s4">404</span>
+    <span class="p-desc">Not a trainer, no such profile, or not the caller's trainee. One answer for all three.<span class="r-sig"><code>{&quot;error&quot;:&quot;not found&quot;}</code></span></span>
+  </div>
+    </div>
+  </div>
+</details>
+
+<details class="ep" id="op-trainerTraineePlanRemove">
+  <summary>
+    <span class="m post">POST</span>
+    <span class="ep-path"><code>/api/trainer/trainee/plan/remove</code></span>
+    <span class="ep-chev" aria-hidden="true"></span>
+    <span class="ep-sum">Trainer: take a plan back from a trainee</span>
+  </summary>
+  <div class="ep-body">
+
+    <p class="ep-auth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>Requires a session: the cookie set at sign-in, or <code>Authorization: Bearer &lt;token&gt;</code> from mobile-app pairing.</span></p>
+
+<p class="ep-h">Request body <span class="p-hint">(JSON)</span></p><div class="ptab">
+  <div class="prow">
+    <span class="p-name">id<em class="p-req" title="required">required</em></span>
+    <span class="p-type">string</span>
+    <span class="p-desc">The trainee's user id.</span>
+  </div>
+  <div class="prow">
+    <span class="p-name">aid<em class="p-req" title="required">required</em></span>
+    <span class="p-type">string</span>
+    <span class="p-desc">The assigned plan.</span>
+  </div>
+</div>
+    <p class="ep-h">Responses</p>
+    <div class="ptab">
+  <div class="prow rrow">
+    <span class="r-code s2">200</span>
+    <span class="p-desc">Done.<span class="r-sig">{ ok: always true }</span></span>
+  </div>
+  <div class="prow rrow">
+    <span class="r-code s4">401</span>
+    <span class="p-desc">No session, expired/revoked session, or a disabled account.<span class="r-sig"><code>{&quot;error&quot;:&quot;not signed in&quot;}</code></span></span>
+  </div>
+  <div class="prow rrow">
+    <span class="r-code s4">404</span>
+    <span class="p-desc">Not a trainer, no such profile, or not the caller's trainee. One answer for all three.<span class="r-sig"><code>{&quot;error&quot;:&quot;not found&quot;}</code></span></span>
+  </div>
+    </div>
+  </div>
+</details>
+
+<details class="ep" id="op-trainerTraineeRelease">
+  <summary>
+    <span class="m post">POST</span>
+    <span class="ep-path"><code>/api/trainer/trainee/release</code></span>
+    <span class="ep-chev" aria-hidden="true"></span>
+    <span class="ep-sum">Trainer: let a trainee go</span>
+  </summary>
+  <div class="ep-body">
+<p>The trainee keeps the app and the plans they were given, and shows on the admin's &quot;no trainer&quot; list. Audited.</p>
+    <p class="ep-auth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>Requires a session: the cookie set at sign-in, or <code>Authorization: Bearer &lt;token&gt;</code> from mobile-app pairing.</span></p>
+
+<p class="ep-h">Request body <span class="p-hint">(JSON)</span></p><div class="ptab">
+  <div class="prow">
+    <span class="p-name">id<em class="p-req" title="required">required</em></span>
+    <span class="p-type">string</span>
+    <span class="p-desc">The trainee's user id.</span>
+  </div>
+</div>
+    <p class="ep-h">Responses</p>
+    <div class="ptab">
+  <div class="prow rrow">
+    <span class="r-code s2">200</span>
+    <span class="p-desc">Done.<span class="r-sig">{ ok: always true }</span></span>
+  </div>
+  <div class="prow rrow">
+    <span class="r-code s4">401</span>
+    <span class="p-desc">No session, expired/revoked session, or a disabled account.<span class="r-sig"><code>{&quot;error&quot;:&quot;not signed in&quot;}</code></span></span>
+  </div>
+  <div class="prow rrow">
+    <span class="r-code s4">404</span>
+    <span class="p-desc">Not a trainer, no such profile, or not the caller's trainee. One answer for all three.<span class="r-sig"><code>{&quot;error&quot;:&quot;not found&quot;}</code></span></span>
+  </div>
+    </div>
+  </div>
+</details>
+
+<details class="ep" id="op-trainerInvites">
+  <summary>
+    <span class="m get">GET</span>
+    <span class="ep-path"><code>/api/trainer/invites</code></span>
+    <span class="ep-chev" aria-hidden="true"></span>
+    <span class="ep-sum">Trainer: the invite codes I made</span>
+  </summary>
+  <div class="ep-body">
+<p>Only the caller's own. Each has <code>code</code>, <code>name</code>, <code>email</code> (when tied to one), <code>created</code>, <code>used</code> and <code>usedAt</code>.</p>
+    <p class="ep-auth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>Requires a session: the cookie set at sign-in, or <code>Authorization: Bearer &lt;token&gt;</code> from mobile-app pairing.</span></p>
+
+
+    <p class="ep-h">Responses</p>
+    <div class="ptab">
+  <div class="prow rrow">
+    <span class="r-code s2">200</span>
+    <span class="p-desc">The list.<span class="r-sig">{ invites: object[], max: integer }</span></span>
+  </div>
+  <div class="prow rrow">
+    <span class="r-code s4">401</span>
+    <span class="p-desc">No session, expired/revoked session, or a disabled account.<span class="r-sig"><code>{&quot;error&quot;:&quot;not signed in&quot;}</code></span></span>
+  </div>
+  <div class="prow rrow">
+    <span class="r-code s4">404</span>
+    <span class="p-desc">The caller is not a trainer.</span>
+  </div>
+    </div>
+  </div>
+</details>
+
+<details class="ep" id="op-trainerInviteNew">
+  <summary>
+    <span class="m post">POST</span>
+    <span class="ep-path"><code>/api/trainer/invites/new</code></span>
+    <span class="ep-chev" aria-hidden="true"></span>
+    <span class="ep-sum">Trainer: make an invite code for a new trainee</span>
+  </summary>
+  <div class="ep-body">
+<p>Whoever signs up with the code becomes the caller's trainee. <code>role</code>, <code>trainerId</code> and <code>months</code> in the request are not read: a trainer cannot make a trainer, bind an invite to someone else, or set an end date. At most 25 unused at a time. Audited.</p>
+    <p class="ep-auth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>Requires a session: the cookie set at sign-in, or <code>Authorization: Bearer &lt;token&gt;</code> from mobile-app pairing.</span></p>
+
+<p class="ep-h">Request body <span class="p-hint">(JSON)</span> <span class="p-hint">(optional)</span></p><div class="ptab">
+  <div class="prow">
+    <span class="p-name">name</span>
+    <span class="p-type">string <span class="p-hint">(&le; 60 chars)</span></span>
+    <span class="p-desc">Who the invite is for.</span>
+  </div>
+  <div class="prow">
+    <span class="p-name">email</span>
+    <span class="p-type">string</span>
+    <span class="p-desc">When set</span>
+  </div>
+</div>
+    <p class="ep-h">Responses</p>
+    <div class="ptab">
+  <div class="prow rrow">
+    <span class="r-code s2">200</span>
+    <span class="p-desc">The new invite.<span class="r-sig">{ invite: object }</span></span>
+  </div>
+  <div class="prow rrow">
+    <span class="r-code s4">400</span>
+    <span class="p-desc">The email is not valid, or 25 invites are unused already (<code>invite-limit</code>).</span>
+  </div>
+  <div class="prow rrow">
+    <span class="r-code s4">401</span>
+    <span class="p-desc">No session, expired/revoked session, or a disabled account.<span class="r-sig"><code>{&quot;error&quot;:&quot;not signed in&quot;}</code></span></span>
+  </div>
+  <div class="prow rrow">
+    <span class="r-code s4">404</span>
+    <span class="p-desc">The caller is not a trainer.</span>
+  </div>
+    </div>
+  </div>
+</details>
+
+<details class="ep" id="op-trainerInviteRevoke">
+  <summary>
+    <span class="m post">POST</span>
+    <span class="ep-path"><code>/api/trainer/invites/revoke</code></span>
+    <span class="ep-chev" aria-hidden="true"></span>
+    <span class="ep-sum">Trainer: revoke an unused invite code of mine</span>
+  </summary>
+  <div class="ep-body">
+
+    <p class="ep-auth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>Requires a session: the cookie set at sign-in, or <code>Authorization: Bearer &lt;token&gt;</code> from mobile-app pairing.</span></p>
+
+<p class="ep-h">Request body <span class="p-hint">(JSON)</span></p><div class="ptab">
+  <div class="prow">
+    <span class="p-name">code<em class="p-req" title="required">required</em></span>
+    <span class="p-type">string</span>
+    <span class="p-desc"></span>
+  </div>
+</div>
+    <p class="ep-h">Responses</p>
+    <div class="ptab">
+  <div class="prow rrow">
+    <span class="r-code s2">200</span>
+    <span class="p-desc">Done.<span class="r-sig">{ ok: always true }</span></span>
+  </div>
+  <div class="prow rrow">
+    <span class="r-code s4">400</span>
+    <span class="p-desc">Already used.</span>
+  </div>
+  <div class="prow rrow">
+    <span class="r-code s4">401</span>
+    <span class="p-desc">No session, expired/revoked session, or a disabled account.<span class="r-sig"><code>{&quot;error&quot;:&quot;not signed in&quot;}</code></span></span>
+  </div>
+  <div class="prow rrow">
+    <span class="r-code s4">404</span>
+    <span class="p-desc">Not a trainer, or no such code among the caller's own.</span>
+  </div>
+    </div>
+  </div>
+</details>
+
+<details class="ep" id="op-trainerAck">
+  <summary>
+    <span class="m post">POST</span>
+    <span class="ep-path"><code>/api/trainer/ack</code></span>
+    <span class="ep-chev" aria-hidden="true"></span>
+    <span class="ep-sum">Trainee: I have been shown who my trainer is</span>
+  </summary>
+  <div class="ep-body">
+<p>Sent by the app after showing &quot;Your trainer is now ...&quot;. From then on that trainer sees the caller's workouts, body weight and body measurements. Safe to repeat.</p>
+    <p class="ep-auth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>Requires a session: the cookie set at sign-in, or <code>Authorization: Bearer &lt;token&gt;</code> from mobile-app pairing.</span></p>
+
+
+    <p class="ep-h">Responses</p>
+    <div class="ptab">
+  <div class="prow rrow">
+    <span class="r-code s2">200</span>
+    <span class="p-desc">Recorded.<span class="r-sig">{ ok: always true, myTrainer: object | null }</span></span>
+  </div>
+  <div class="prow rrow">
+    <span class="r-code s4">401</span>
+    <span class="p-desc">No session, expired/revoked session, or a disabled account.<span class="r-sig"><code>{&quot;error&quot;:&quot;not signed in&quot;}</code></span></span>
+  </div>
+    </div>
+  </div>
+</details>
+
+<details class="ep" id="op-trainerLeave">
+  <summary>
+    <span class="m post">POST</span>
+    <span class="ep-path"><code>/api/trainer/leave</code></span>
+    <span class="ep-chev" aria-hidden="true"></span>
+    <span class="ep-sum">Trainee: leave my trainer</span>
+  </summary>
+  <div class="ep-body">
+<p>The plans the caller was given stay. Audited.</p>
+    <p class="ep-auth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>Requires a session: the cookie set at sign-in, or <code>Authorization: Bearer &lt;token&gt;</code> from mobile-app pairing.</span></p>
+
+
+    <p class="ep-h">Responses</p>
+    <div class="ptab">
+  <div class="prow rrow">
+    <span class="r-code s2">200</span>
+    <span class="p-desc">Done.<span class="r-sig">{ ok: always true }</span></span>
+  </div>
+  <div class="prow rrow">
+    <span class="r-code s4">401</span>
+    <span class="p-desc">No session, expired/revoked session, or a disabled account.<span class="r-sig"><code>{&quot;error&quot;:&quot;not signed in&quot;}</code></span></span>
+  </div>
+    </div>
+  </div>
+</details>
+  </div>
+</section>
+
   <section class="api-sec" id="schemas">
     <h2>Schemas</h2>
     <p class="sub">The named shapes the endpoints above link to. The <code>State</code> blob
@@ -4594,6 +5101,31 @@ main.api-main .lead { color: var(--fg-2); max-width: 58ch; margin: 14px 0 0; fon
   </div>
   <div class="prow">
     <span class="p-name">admin</span>
+    <span class="p-type">boolean</span>
+    <span class="p-desc"></span>
+  </div>
+  <div class="prow">
+    <span class="p-name">expiresAt</span>
+    <span class="p-type">string</span>
+    <span class="p-desc">Present only when the account has an end date.</span>
+  </div>
+  <div class="prow">
+    <span class="p-name">trainer</span>
+    <span class="p-type">boolean</span>
+    <span class="p-desc">Present (true) only for a trainer.</span>
+  </div>
+  <div class="prow">
+    <span class="p-name">myTrainer</span>
+    <span class="p-type">object</span>
+    <span class="p-desc">Present only for someone who has a trainer right now: the trainer's name, and whether this person has been shown it (<code>ack</code>). Never the trainer's id.</span>
+  </div>
+  <div class="prow">
+    <span class="p-name">myTrainer.name</span>
+    <span class="p-type">string</span>
+    <span class="p-desc"></span>
+  </div>
+  <div class="prow">
+    <span class="p-name">myTrainer.ack</span>
     <span class="p-type">boolean</span>
     <span class="p-desc"></span>
   </div>
@@ -5759,7 +6291,17 @@ main.api-main .lead { color: var(--fg-2); max-width: 58ch; margin: 14px 0 0; fon
   <div class="prow">
     <span class="p-name">createdBy</span>
     <span class="p-type">string</span>
-    <span class="p-desc">Admin user id.</span>
+    <span class="p-desc">User id of the admin or trainer who made it.</span>
+  </div>
+  <div class="prow">
+    <span class="p-name">role</span>
+    <span class="p-type">string</span>
+    <span class="p-desc">Present (<code>trainer</code>) only on an invite that makes a trainer.</span>
+  </div>
+  <div class="prow">
+    <span class="p-name">trainerId</span>
+    <span class="p-type">string</span>
+    <span class="p-desc">Present when the new profile becomes that trainer's trainee.</span>
   </div>
   <div class="prow">
     <span class="p-name">created</span>

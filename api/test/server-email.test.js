@@ -284,15 +284,15 @@ test('an address is unique across profiles, case-insensitively, and never anothe
   const opts = await h2.req('GET', '/api/account/password', { cookie: `gymsid=${mintSession('u2')}` });
   assert.equal(opts.body.nameTaken, true);
   // Signing up with an address in use, or a name that is one, is refused the same way.
-  let r = await h.req('POST', '/api/register/password', { body: { name: 'Dee', password: GOOD, email: 'Ana@Example.com' }, ip: '198.51.100.150' });
+  let r = await h.req('POST', '/api/register/password', { body: { adult: true, name: 'Dee', password: GOOD, email: 'Ana@Example.com' }, ip: '198.51.100.150' });
   assert.equal(r.status, 409); assert.equal(r.body.code, 'email-taken');
-  r = await h.req('POST', '/api/register/password', { body: { name: 'ana@example.com', password: GOOD }, ip: '198.51.100.151' });
+  r = await h.req('POST', '/api/register/password', { body: { adult: true, name: 'ana@example.com', password: GOOD }, ip: '198.51.100.151' });
   assert.equal(r.status, 409); assert.equal(r.body.code, 'name-taken');
-  r = await h.req('POST', '/api/register/password', { body: { name: 'Dee', password: GOOD, email: 'nope' }, ip: '198.51.100.152' });
+  r = await h.req('POST', '/api/register/password', { body: { adult: true, name: 'Dee', password: GOOD, email: 'nope' }, ip: '198.51.100.152' });
   assert.equal(r.status, 400); assert.equal(r.body.code, 'email-invalid');
   assert.equal(h.db().users.length, 4);
   // A free one is stored folded, and signs the new profile in straight away.
-  r = await h.req('POST', '/api/register/password', { body: { name: 'Dee', password: GOOD, email: ' Dee@Example.com ' }, ip: '198.51.100.153' });
+  r = await h.req('POST', '/api/register/password', { body: { adult: true, name: 'Dee', password: GOOD, email: ' Dee@Example.com ' }, ip: '198.51.100.153' });
   assert.equal(r.status, 200);
   assert.equal(h.db().users.find(u => u.name === 'Dee').email, 'dee@example.com');
   assert.equal((await signIn(h, { identifier: 'dee@example.com', password: GOOD }, '198.51.100.154')).status, 200);
@@ -310,17 +310,17 @@ test('on an invite-only instance signup says nothing about addresses without a v
   // same for an address in use as for a free one, and nothing counts against "email".
   for (const [i, code] of ['', 'NOPE', 'USEDCODE', 'GONECODE'].entries()) {
     for (const email of ['ana@example.com', 'free@example.com']) {
-      const r = await h.req('POST', '/api/register/password', { body: { name: 'Dee', password: GOOD, email, code }, ip: `198.51.100.${170 + i}` });
+      const r = await h.req('POST', '/api/register/password', { body: { adult: true, name: 'Dee', password: GOOD, email, code }, ip: `198.51.100.${170 + i}` });
       assert.equal(r.status, 403, `${code} ${email}`);
       assert.equal(r.body.code, 'invite');
     }
   }
   assert.equal(h.audit().some(e => e.msg === 'email-taken'), false);
   // With a valid code the address in use is refused, and the code is still there to use.
-  let r = await h.req('POST', '/api/register/password', { body: { name: 'Dee', password: GOOD, email: 'ANA@example.com', code: 'goodcode' }, ip: '198.51.100.180' });
+  let r = await h.req('POST', '/api/register/password', { body: { adult: true, name: 'Dee', password: GOOD, email: 'ANA@example.com', code: 'goodcode' }, ip: '198.51.100.180' });
   assert.equal(r.status, 409); assert.equal(r.body.code, 'email-taken');
   assert.equal(h.db().invites.find(i => i.code === 'GOODCODE').usedBy, undefined);
-  r = await h.req('POST', '/api/register/password', { body: { name: 'Dee', password: GOOD, email: 'dee@example.com', code: 'GOODCODE' }, ip: '198.51.100.181' });
+  r = await h.req('POST', '/api/register/password', { body: { adult: true, name: 'Dee', password: GOOD, email: 'dee@example.com', code: 'GOODCODE' }, ip: '198.51.100.181' });
   assert.equal(r.status, 200);
   assert.equal(h.db().invites.find(i => i.code === 'GOODCODE').usedBy, h.db().users.find(u => u.name === 'Dee').id);
 });
@@ -346,10 +346,10 @@ test('signing up with an address as the name counts against the address like the
   const h = await startServer(t, { users: [withPassword('u1', 'Ana', { email: 'ana@example.com' })] });
   const ip = '203.0.113.70';
   for (let i = 0; i < 21; i++) {
-    const r = await h.req('POST', '/api/register/password', { body: { name: 'ana@example.com', password: GOOD }, ip });
+    const r = await h.req('POST', '/api/register/password', { body: { adult: true, name: 'ana@example.com', password: GOOD }, ip });
     assert.equal(r.status, 409, 'try ' + i); assert.equal(r.body.code, 'name-taken');
   }
-  const r = await h.req('POST', '/api/register/password', { body: { name: 'ana@example.com', password: GOOD }, ip });
+  const r = await h.req('POST', '/api/register/password', { body: { adult: true, name: 'ana@example.com', password: GOOD }, ip });
   assert.equal(r.status, 429); assert.equal(r.body.code, 'locked');
   assert.equal(leaks(h, 'example.com'), false);
 });
