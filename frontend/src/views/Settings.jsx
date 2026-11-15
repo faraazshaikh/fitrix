@@ -24,6 +24,7 @@ import { weekTargetOf } from '../lib/week-left.js'
 import { speak, speechSupported, SPEECH_RATES, speechRateOf } from '../lib/speech.js'
 import { sampleCue } from '../lib/spoken-cues.js'
 import { muscleTargetsSheet } from '../components/WeeklySets.jsx'
+import { bodyFatSheet, bmrSheet } from '../components/BodyCalc.jsx'
 import { aboutYouSheet } from '../components/StrengthLevel.jsx'
 import { api, webauthnOK, passkeyRegister, passkeyError, IS_ANDROID } from '../lib/api.js'
 import { pushSupported, enablePush, disablePush, sendTestPush, syncPushSubscription } from '../lib/push.js'
@@ -882,7 +883,7 @@ export default function Settings({ page = null, find = null, via = null, entryKe
           subtitle={t('Waist, neck, chest and the other tape measures. Weight keeps its own unit.')}>
           <Segmented className="seg-inline"
             options={[{ value: 'cm', label: 'cm' }, { value: 'in', label: 'in' }]}
-            value={S.lengthUnit || (S.unit === 'lb' ? 'in' : 'cm')} onChange={v => update(s => { s.lengthUnit = v })} />
+            value={S.lengthUnit || 'in'} onChange={v => update(s => { s.lengthUnit = v })} />
         </Row>
         {/* Display only: one decimal reads fine for plate-loadable numbers, two for anyone whose
             per-side figure lands on .25 or .75, or who loads microplates (issue #139). Nothing is
@@ -1351,6 +1352,12 @@ function SettingsRoot({ ctx, preview, open, user, sync, home, go, entryKey }) {
         {adminCoach && <Row icon={PAGES.coach.icon} iconTint={PAGES.coach.tint} title={t(PAGES.coach.title)}
           value={t('Admin')} accessory="chevron" onClick={() => nav('/admin', { state: { section: 'coach' } })} className="sp-root-row" />}
       </Section>
+      {(!ctx.mod || ctx.mod('body')) && <Section title={t('Calculators')}>
+        <Row icon="ruler" iconTint="var(--teal)" title={t('Body fat calculator')} subtitle={t('From waist, neck and height')}
+          accessory="chevron" onClick={() => bodyFatSheet()} />
+        <Row icon="flame" iconTint="var(--teal)" title={t('BMR calculator')} subtitle={t('Resting energy and daily calories')}
+          accessory="chevron" onClick={() => bmrSheet()} />
+      </Section>}
       <div className="dim small sp-version">Fitrix v{__APP_VERSION__}</div>
     </>}
   </div>

@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { lengthKey, logBodyFat, measurementSeries, measurementUnit } from './measurements.js'
 
 describe('lengthKey', () => {
-  it('follows the weight unit until a tape-measure unit is chosen', () => {
-    expect(lengthKey({ unit: 'kg' })).toBe('kg')
+  it('measures in inches, whatever the weight unit, until centimetres are chosen', () => {
+    expect(lengthKey({ unit: 'kg' })).toBe('lb')
     expect(lengthKey({ unit: 'lb' })).toBe('lb')
-    expect(lengthKey({})).toBe('kg')
+    expect(lengthKey({})).toBe('lb')
+    expect(lengthKey({ unit: 'kg', lengthUnit: 'cm' })).toBe('kg')
+    expect(lengthKey({ unit: 'lb', lengthUnit: 'cm' })).toBe('kg')
   })
   it('lets kg go with inches, and lb with centimetres', () => {
     expect(measurementUnit(lengthKey({ unit: 'kg', lengthUnit: 'in' }))).toBe('in')

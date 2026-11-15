@@ -80,7 +80,7 @@ describe('body fat calculator', () => {
   })
 
   it('starts from the latest waist and remembers the height next time', () => {
-    seed({ measurements: [{ d: '2026-11-01', t: 1, waist: 86.4, neck: 38.1 }] })
+    seed({ lengthUnit: 'cm', measurements: [{ d: '2026-11-01', t: 1, waist: 86.4, neck: 38.1 }] })
     act(() => { bodyFatSheet() })
     let host = topSheet()
     expect(field(host, 'Waist')[0].value).toBe('86.4')
@@ -108,7 +108,7 @@ describe('BMR calculator', () => {
   })
 
   it('falls back to age, height and weight when the fat percentage is empty', () => {
-    seed({ bodyweight: [{ d: '2026-11-01', w: 81 }] })
+    seed({ lengthUnit: 'cm', bodyweight: [{ d: '2026-11-01', w: 81 }] })
     act(() => { bmrSheet() })
     const host = topSheet()
     setValue(field(host, 'Age')[0], '37')

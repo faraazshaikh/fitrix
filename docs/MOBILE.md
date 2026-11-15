@@ -692,7 +692,7 @@ so `npx` fetches it for that one run.
 
 The alternate icons people can pick in Settings → Look & Home → App icon are not made by that
 generator. `node scripts/app-icons.mjs` draws them from the list in
-`src/lib/app-icon-variants.js` and the dumbbell glyph in `resources/dumbbell.svg`, with no dependencies: the
+`src/lib/app-icon-variants.js` and the Fitrix plate mark in `resources/icon.svg`, with no dependencies: the
 SVG per icon in `resources/icons/`, an `AppIcon-<Name>` set (1024 px, opaque) per icon in the iOS
 asset catalog, the Android launcher, round and adaptive layers per density, and the previews in
 `public/app-icons/`. An icon with `art` (Halloween) is a hand-made SVG in `resources/icons/`

@@ -260,6 +260,12 @@ out and locked out everywhere until you re-enable it), and — with `INVITE_ONLY
 revoking invite codes. Existing accounts keep working when you switch invite-only on. Admin access
 is gated by your passkey and enforced server-side, so it needs no separate login.
 
+**Giving someone a plan.** Open a user in the dashboard and tap **Give a plan**: pick one of your own
+routines and a copy lands in their Plan tab the next time their app syncs, marked with who sent it.
+Tap **Update** on it after you change your routine and their copy is replaced; **Take back** removes
+it, and the workouts they logged with it stay. The same screen shows whether they trained each plan
+and when they last did.
+
 **Already registered and there's no Admin dashboard?** That's the usual way to find out
 `FIRST_USER_ADMIN` was off when you signed up (it is by default). It only ever applies to the very
 first profile, so switching it on now does nothing. Do this instead:

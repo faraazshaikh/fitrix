@@ -310,6 +310,18 @@ function Shell() {
   // A pairing link from the browser (components/PairLink.jsx): it may be what finishes the setup, so
   // it waits for the app to be up, not for the setup.
   usePairLinks(ready || authed || needsMobileOnboarding)
+  // Plans an admin gave this profile (lib/assigned-plan.js): fetched once the setup is through, when
+  // the app comes back to the front, and every few minutes while it stays open. The store makes
+  // at most one request a minute.
+  useEffect(() => {
+    if (!setupDone || !user) return
+    const pull = () => useStore.getState().pullAssigned()
+    pull()
+    const onShow = () => { if (document.visibilityState === 'visible') pull() }
+    document.addEventListener('visibilitychange', onShow)
+    const iv = setInterval(pull, 5 * 60 * 1000)
+    return () => { document.removeEventListener('visibilitychange', onShow); clearInterval(iv) }
+  }, [setupDone, user?.id])
   useEffect(() => {
     if (!setupDone || tourAsked.current) return
     const tm = setTimeout(() => {

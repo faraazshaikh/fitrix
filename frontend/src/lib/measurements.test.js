@@ -125,7 +125,7 @@ describe('custom measurement units (#699)', () => {
     expect(s.customMeasurements[0]).not.toHaveProperty('unit')
     expect(s.measurements[0].other[0].value).toBe(82.6)
     expect(measurementSeries(s, 'other:muscle')[0].y).toBe(32.5)
-    expect(measurementSeries({ ...s, unit: 'kg' }, 'other:muscle')[0].y).toBe(82.6)
+    expect(measurementSeries({ ...s, unit: 'kg', lengthUnit: 'cm' }, 'other:muscle')[0].y).toBe(82.6)
   })
 
   it('accepts 0–100% including zero, ignores blank/invalid values, and preserves orphaned units', () => {

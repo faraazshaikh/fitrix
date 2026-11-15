@@ -93,7 +93,7 @@ describe('the root', () => {
     mount()
     expect(host.querySelector('.sp-acct .lrow-t').textContent).toBe('Guest')
     expect(host.querySelector('.sp-acct .lrow-s').textContent).toBe('Your data lives on this device. Sign in to sync.')
-    expect(titles()).toEqual(['Guest', 'Workouts', 'Plan & equipment', 'Appearance & units', 'Health & devices', 'Data & backup'])
+    expect(titles()).toEqual(['Guest', 'Workouts', 'Plan & equipment', 'Appearance & units', 'Health & devices', 'Data & backup', 'Body fat calculator', 'BMR calculator'])
   })
 
   it('each group lists its pages, with value previews', () => {

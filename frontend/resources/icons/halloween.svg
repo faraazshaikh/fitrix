@@ -1,7 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 512 512">
   <!-- openGym app icon "halloween", drawn by hand (the only one not written by scripts/app-icons.mjs,
-       which renders it). The dumbbell is the glyph of resources/icon.svg in pumpkin orange; around
-       it a purple night, a crescent moon, a cobweb near the corner and its spider. Only rect, circle,
+       which renders it). The plates are the Fitrix mark of resources/icon.svg in pumpkin orange, the
+       bottom one carved like a jack-o'-lantern; around it a purple night, a crescent moon, a cobweb
+       near the corner and its spider. Only rect, circle,
        line, polyline, polygon and one radialGradient: what the script knows how to draw. -->
   <defs>
     <radialGradient id="night" gradientUnits="userSpaceOnUse" cx="256" cy="300" r="380">
@@ -36,34 +37,30 @@
     <polyline points="282,100 300.7,109.7 311.3,118.5 312.4,129.1 307.9,143.1 327.5,143.3 340.2,145.6 346,152.3 349,163 362.9,158.4 372.4,157.3 378.2,161.6 382.9,170.2 392.4,163.6 399.5,161.1 405.5,164.5 412,172"/>
   </g>
   <!-- its spider, on a thread from the web, clear of the plates -->
-  <line x1="294" y1="106" x2="294" y2="162" stroke="#b7a2de" stroke-width="4"/>
+  <line x1="334" y1="106" x2="334" y2="162" stroke="#b7a2de" stroke-width="4"/>
   <g stroke="#ecdfff" stroke-width="4.5">
-    <polyline points="287.6,168.4 276.4,160.4 271.6,168.4"/>
-    <polyline points="300.4,168.4 311.6,160.4 316.4,168.4"/>
-    <polyline points="287.6,173.2 273.2,171.6 268.4,181.2"/>
-    <polyline points="300.4,173.2 314.8,171.6 319.6,181.2"/>
-    <polyline points="288.4,178 276.4,182.8 274.8,192.4"/>
-    <polyline points="299.6,178 311.6,182.8 313.2,192.4"/>
+    <polyline points="327.6,168.4 316.4,160.4 311.6,168.4"/>
+    <polyline points="340.4,168.4 351.6,160.4 356.4,168.4"/>
+    <polyline points="327.6,173.2 313.2,171.6 308.4,181.2"/>
+    <polyline points="340.4,173.2 354.8,171.6 359.6,181.2"/>
+    <polyline points="328.4,178 316.4,182.8 314.8,192.4"/>
+    <polyline points="339.6,178 351.6,182.8 353.2,192.4"/>
   </g>
   <g fill="#ecdfff">
-    <circle cx="294" cy="165.2" r="7.2"/>
-    <circle cx="294" cy="178" r="10.4"/>
+    <circle cx="334" cy="165.2" r="7.2"/>
+    <circle cx="334" cy="178" r="10.4"/>
   </g>
-  <!-- the dumbbell, pumpkin orange -->
+  <!-- the Fitrix plates, pumpkin orange -->
   <g fill="#ff7a1a">
-    <rect x="80" y="242" width="352" height="28"/>
-    <rect x="80" y="199" width="36" height="114"/>
-    <rect x="131" y="169" width="47" height="174"/>
-    <rect x="334" y="169" width="47" height="174"/>
-    <rect x="396" y="199" width="36" height="114"/>
+    <rect x="112.0" y="346.0" width="288.0" height="63" rx="31.5"/>
+    <rect x="157.0" y="265.0" width="198.0" height="63" rx="31.5"/>
+    <rect x="202.0" y="184.0" width="108.0" height="63" rx="31.5"/>
+    <circle cx="256.0" cy="130.0" r="27"/>
   </g>
-  <!-- the big plates carved like jack-o'-lanterns: two eyes and a grin each, lit from inside -->
+  <!-- the bottom plate carved like a jack-o'-lantern: two eyes and a grin, lit from inside -->
   <g fill="#ffd166">
-    <polygon points="136,214 151,214 143.5,198"/>
-    <polygon points="158,214 173,214 165.5,198"/>
-    <polygon points="136,292 154.5,302 173,292 170,310 164,304 154.5,316 145,304 139,310"/>
-    <polygon points="339,214 354,214 346.5,198"/>
-    <polygon points="361,214 376,214 368.5,198"/>
-    <polygon points="339,292 357.5,302 376,292 373,310 367,304 357.5,316 348,304 342,310"/>
+    <polygon points="170,370 192,370 181,352"/>
+    <polygon points="320,370 342,370 331,352"/>
+    <polygon points="214,382 234,392 256,398 278,392 298,382 292,402 280,396 268,404 256,397 244,404 232,396 220,402"/>
   </g>
 </svg>

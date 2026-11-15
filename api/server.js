@@ -36,6 +36,7 @@ import {
 import { startAdminSocket } from './admin-socket.js';
 import { createMediaStore, mediaLimits, mediaConfig, MediaError, HASH_RE } from './media.js';
 import { effectiveRoutineId } from './queue.js';
+import { assignPlan, unassignPlan, assignedFor, assignedReport, dropAssigned } from './assigned-plan.js';
 import { stampPut } from './sync-stamps.js';
 import { atomicWrite as durableWrite } from './durable.js';
 import { ipv6Groups, guardedLookup, pushEndpointError, MAX_PUSH_ENDPOINT } from './net-guard.js';
@@ -157,6 +158,7 @@ db.users = db.users || [];
 db.creds = db.creds || [];
 db.subs = db.subs || [];
 db.invites = db.invites || [];
+db.assigned = db.assigned || {};   // plans an admin handed to a profile (assigned-plan.js)
 
 // Access that ends. An invite can carry a number of months (invite.months, none = indefinite),
 // counted from sign-up: the account then gets user.expiresAt. Once it has passed the account is
@@ -1357,6 +1359,7 @@ function removeAccount(u) {
   dropWatchLinks(db, u.id);
   dropWatchCodes(watchCodes, u.id);
   presence.delete(u.id);
+  dropAssigned(db, u.id);
   // The training history and any Coach credential of theirs, both outside db.json.
   try { fs.unlinkSync(stateFile(u.id)); } catch { /* already gone */ }
   try { fs.unlinkSync(watchFile(u.id)); } catch { /* never had a watch */ }
@@ -2827,6 +2830,8 @@ const routes = {
       unit: S.unit || 'kg',
       lastSync: lastSyncOf(u, S),
       routines: records(S.routines).map(r => ({ id: r.id, name: r.name, emoji: r.emoji, count: records(r.ex).length })),
+      // Plans this admin world handed to them, and whether they have trained each (assigned-plan.js).
+      assigned: assignedReport(db, u.id, records(S.workouts)),
       bodyweight: records(S.bodyweight),
       // records() already copied, so this reverse is ours: newest first for display. A workout's
       // photos and videos are the owner's own: the admin view gets no refs to them.
@@ -2992,6 +2997,40 @@ const routes = {
     saveDb();
     audit(req, 'admin.user.validity', { user: admin, target: u, msg: u.expiresAt || 'indefinite' });
     json(res, 200, { ok: true, id: u.id, expiresAt: u.expiresAt || null, expired: isExpired(u) });
+  },
+
+  // A plan from an admin (assigned-plan.js): the person's own device fetches it and files it as a
+  // routine, so it shows in their Plan tab and follows later changes.
+  'GET /api/assigned': async (req, res) => {
+    const user = readSession(req);
+    if (!user) return json(res, 401, { error: 'not signed in' });
+    json(res, 200, { plans: assignedFor(db, user.id) });
+  },
+
+  // Give a profile one of your routines, or send the same `aid` again to update what they have.
+  'POST /api/admin/user/plan': async (req, res) => {
+    const admin = requireAdmin(req, res); if (!admin) return;
+    const body = await readBody(req);
+    const u = db.users.find(x => x.id === text(body.id));
+    if (!u) return json(res, 404, { error: 'no such user' });
+    const entry = assignPlan(db, u.id, text(admin.name).slice(0, 40), body, Date.now(), text(body.aid) || null);
+    if (entry.error) return json(res, 400, { error: entry.error });
+    saveDb();
+    audit(req, 'admin.plan.assign', { user: admin, target: u, msg: entry.routine.name });
+    json(res, 200, { ok: true, aid: entry.aid, at: entry.at });
+  },
+
+  // Take an assigned plan back. Their copy goes from their Plan tab on their next sync;
+  // the workouts they logged with it stay.
+  'POST /api/admin/user/plan/remove': async (req, res) => {
+    const admin = requireAdmin(req, res); if (!admin) return;
+    const body = await readBody(req);
+    const u = db.users.find(x => x.id === text(body.id));
+    if (!u) return json(res, 404, { error: 'no such user' });
+    if (!unassignPlan(db, u.id, text(body.aid))) return json(res, 404, { error: 'no such assigned plan' });
+    saveDb();
+    audit(req, 'admin.plan.remove', { user: admin, target: u });
+    json(res, 200, { ok: true });
   },
 
   /* ---------- activity log ---------- */

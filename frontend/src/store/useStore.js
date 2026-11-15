@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { api, setRemoteAuth } from '../lib/api.js'
 import { localTZ } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
+import { applyAssigned, assignedChanges } from '../lib/assigned-plan.js'
 import { registerCustom, healCustomEx } from '../lib/exercises.js'
 import { syncGymInventory } from '../lib/gym-inventory.js'
 import { DEMO, DEMO_SEEDED } from '../lib/demo.js'
@@ -384,6 +385,7 @@ export const useStore = create((set, get) => {
   let pushing = null       // the PUT in flight, so a second push waits for it instead of racing it
   let pushAgain = false    // a push asked for while one was in flight — run once more after it
   let pulling = null       // the GET in flight, so two resume signals make one request
+  let assignedBusy = false, assignedAt = 0   // pullAssigned: one request at a time, at most one a minute
   let configFetch = null   // the /api/config in flight, so two callers make one request
   let pushPending = false  // a change made before boot's pull — pushed once boot is through
   let forceNext = false    // the next push replaces the server copy outright (reset)
@@ -1810,6 +1812,19 @@ export const useStore = create((set, get) => {
         finally { pulling = null }
       })()
       return pulling
+    },
+
+    // Plans an admin assigned to this profile (lib/assigned-plan.js): filed as routines, saved and
+    // synced like any change. A server from before them answers 404, which is simply no plans.
+    async pullAssigned() {
+      if (!get().user || sandbox || adoptHold || assignedBusy || Date.now() - assignedAt < 60000) return
+      assignedBusy = true
+      try {
+        const { plans } = await api('/api/assigned')
+        assignedAt = Date.now()
+        if (assignedChanges(get().S, plans)) get().update(S => { applyAssigned(S, plans) })
+      } catch { /* offline or an older server: the next pull tries again */ }
+      finally { assignedBusy = false }
     },
 
     // "Sync now": what is waiting goes, the server's copy is checked, and the answer is the

@@ -70,10 +70,10 @@ describe('the Halloween icon', () => {
     expect(scene(read(v.art)).length).toBeGreaterThan(10)
   })
 
-  it('is dark at the edges, orange on the dumbbell, pale on the moon', () => {
+  it('is dark at the edges, orange on the plates, pale on the moon', () => {
     const shapes = scene(read(v.art))
     const at = (x, y) => shapes.find(s => s.hit(x, y)).color(x, y).map(Math.round)
-    expect(at(256, 256)).toEqual([255, 122, 26])   // the bar
+    expect(at(256, 296)).toEqual([255, 122, 26])   // the middle plate
     expect(at(90, 110)).toEqual([247, 232, 180])   // the moon's lit side
     const corner = at(10, 500)
     expect(Math.max(...corner)).toBeLessThan(40)
@@ -89,7 +89,7 @@ describe('the Halloween icon', () => {
       if (d >= 234 && d <= 256 && Math.max(...shapes.find(s => s.hit(x, y)).color(x, y)) > 120) lit++
     }
     expect(lit).toBeLessThan(80)
-    expect(shapes.find(s => s.hit(294, 178)).color(294, 178).map(Math.round)).toEqual([236, 223, 255])   // the spider
+    expect(shapes.find(s => s.hit(334, 178)).color(334, 178).map(Math.round)).toEqual([236, 223, 255])   // the spider
   })
 })
 
@@ -101,13 +101,13 @@ describe('the Christmas icon', () => {
     expect(scene(read(v.art)).length).toBeGreaterThan(20)
   })
 
-  it('a lime dumbbell in a Santa hat, wrapped with a red ribbon, on a dark winter night', () => {
+  it('lime plates, a Santa hat on the dot, a red ribbon on the bottom plate, on a dark winter night', () => {
     const shapes = scene(read(v.art))
     const at = (x, y) => shapes.find(s => s.hit(x, y)).color(x, y).map(Math.round)
-    expect(at(256, 256)).toEqual([163, 230, 53])    // the bar, openGym lime
-    expect(at(165, 140)).toEqual([230, 57, 70])     // the hat
-    expect(at(357, 300)).toEqual([230, 57, 70])     // the ribbon
-    expect(at(150, 164)).toEqual([248, 249, 250])   // the hat's brim
+    expect(at(256, 296)).toEqual([163, 230, 53])    // the middle plate, lime
+    expect(at(285, 100)).toEqual([230, 57, 70])     // the hat
+    expect(at(256, 390)).toEqual([230, 57, 70])     // the ribbon
+    expect(at(240, 126)).toEqual([248, 249, 250])   // the hat's brim
     expect(Math.max(...at(10, 500))).toBeLessThan(40)
   })
 

@@ -4,6 +4,26 @@ Newest first. Each release is a `## vX.Y.Z (YYYY-MM-DD)` section, and the releas
 GitHub and GitLab are that section, word for word. New work goes under `## Unreleased` until the
 tag. Write it for the people using the app: what changed for them, short, no em dashes.
 
+## v1.4.12 (2026-11-15)
+
+**Give someone a plan.** In the admin dashboard, open a user and tap Give a plan, then pick one of
+your routines. It shows up in their Plan tab, marked From you, the next time their app syncs. Change
+your routine and tap Update to send the new version; Take back removes it and keeps the workouts
+they logged with it. The same screen says whether they have trained each plan and when they last did.
+This needs the server update, which Fitrix installs by itself.
+
+**Calculators in You.** Settings, the You tab, now lists the body fat and BMR calculators right on
+its first screen, so you no longer have to open Measurements to find them.
+
+**Inches for the tape measure.** Waist, neck and the other body measurements show in inches by
+default, while weight stays in kg. If you would rather have centimetres, Settings, Units and
+language, Body measurement unit.
+
+**The other app icons match the logo.** Every icon you can pick in Settings now shows the stacked
+plates: Light, Mono, Green, Blue, Orange, Pink and Purple in their own colours, Halloween with a
+jack-o'-lantern plate, and Christmas with a Santa hat on the dot. Android moves the new icon in once
+you leave the app. This one needs the new app file.
+
 ## v1.4.11 (2026-11-15)
 
 **Pair the Android app in one tap.** On the pairing screen in Settings (Account, Pair the mobile

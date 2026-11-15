@@ -41,10 +41,10 @@ export const measurementUnitLabel = unit => unit === 'none' ? '' : unit
 // A unit where 0 is a reading, not an empty field: 0 % or a score of 0.
 export const zeroIsReading = unit => unit === '%' || unit === 'none'
 
-// The unit key the length helpers below take ('lb' reads inches, anything else cm). It follows the
-// weight unit unless the profile picked its own tape-measure unit (Settings → Units), so a lifter
-// who weighs in kg can still measure a waist in inches.
-export const lengthKey = state => state?.lengthUnit === 'in' ? 'lb' : state?.lengthUnit === 'cm' ? 'kg' : (state?.unit || 'kg')
+// The unit key the length helpers below take ('lb' reads inches, anything else cm). Tape measures
+// are in inches unless the profile picked cm (Settings → Units), whatever the weight unit is: Fitrix
+// weighs in kg and measures a waist in inches.
+export const lengthKey = state => state?.lengthUnit === 'cm' ? 'kg' : 'lb'
 export const measurementUnit = (unit, field) => field?.key === 'bodyFat' ? '%' : unitOf(field) || (unit === 'lb' ? 'in' : 'cm')
 export const toMeasurementDisplay = (value, unit, field) => {
   if (value == null) return null

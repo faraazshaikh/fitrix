@@ -2946,6 +2946,107 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
 
+  /api/admin/user/plan:
+    post:
+      tags: [admin]
+      operationId: adminUserPlan
+      summary: 'Admin: give a user a plan, or update the one they have'
+      description: |
+        Copies a routine (and the custom exercises it uses) into the user's assigned plans. The
+        user's device fetches it with `GET /api/assigned` and files it as a routine in their Plan
+        tab, so the next change you send replaces it there. Send the `aid` of an earlier answer to
+        update that plan instead of adding another. A person holds at most 12. Audited.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id, routine]
+              properties:
+                id: { type: string, description: The user id. }
+                aid: { type: string, description: An assigned plan to replace. }
+                routine: { type: object, description: 'The routine: `name`, `emoji`, `ex` (a list of exercises, each with an `id`).' }
+                customEx: { type: array, items: { type: object }, description: Custom exercises; only the ones the routine uses are kept. }
+      responses:
+        '200':
+          description: Assigned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, const: true }
+                  aid: { type: string }
+                  at: { type: string }
+        '400':
+          description: Not a usable routine, or the person already has the most plans.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: No user with that id, or no such assigned plan.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/admin/user/plan/remove:
+    post:
+      tags: [admin]
+      operationId: adminUserPlanRemove
+      summary: 'Admin: take an assigned plan back'
+      description: |
+        The plan leaves the user's Plan tab on their next sync. The workouts they logged with it
+        stay. Audited.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id, aid]
+              properties:
+                id: { type: string, description: The user id. }
+                aid: { type: string, description: The assigned plan. }
+      responses:
+        '200':
+          description: Removed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, const: true }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: No such user or assigned plan.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/assigned:
+    get:
+      tags: [data]
+      operationId: getAssigned
+      summary: Plans an admin assigned to me
+      description: |
+        Each entry has an `aid`, who sent it (`by`), when (`at`), the `routine` (its `id` is
+        `a-<aid>`) and the custom exercises it uses. The app files them into the Plan tab and
+        refreshes them when `at` changes.
+      responses:
+        '200':
+          description: The plans, possibly none.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  plans: { type: array, items: { type: object } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
   /api/admin/user/delete:
     post:
       tags: [admin]

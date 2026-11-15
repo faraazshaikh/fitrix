@@ -50,7 +50,7 @@ afterEach(() => { act(() => { mounted.splice(0).forEach(r => r.unmount()) }) })
 
 describe('logging body measurements', () => {
   it('a check-in typed in cm is saved for today and shows on the screen', () => {
-    seed()
+    seed({ lengthUnit: 'cm' })
     const screen = render(<Measurements />)
     expect(screen.textContent).toContain('No measurements yet')
     act(() => measurementLogSheet())
@@ -62,6 +62,15 @@ describe('logging body measurements', () => {
     expect(entries()[0]).toMatchObject({ d: todayISO(), waist: 84.5, bodyFat: 18, chest: null })
     expect(screen.textContent).toContain('84.5')
     expect(screen.textContent).not.toContain('No measurements yet')
+  })
+
+  it('in kg too, a waist is typed in inches until centimetres are chosen', () => {
+    seed({ unit: 'kg' })
+    act(() => measurementLogSheet())
+    const form = topSheet()
+    setValue(field(form, 'Waist'), '36')
+    click(form, 'Save')
+    expect(entries()[0].waist).toBeCloseTo(36 * 2.54, 1)   // kept to a millimetre
   })
 
   it('in lb a waist typed in inches is stored in cm and read back in inches', () => {
@@ -89,7 +98,7 @@ describe('logging body measurements', () => {
 
   it('a second check-in on the same day is refused: the day is edited instead, and stays one entry', () => {
     const day = todayISO()
-    seed({ measurements: [{ d: day, t: 1, waist: 90, chest: null, bodyFat: null, other: [] }] })
+    seed({ lengthUnit: 'cm', measurements: [{ d: day, t: 1, waist: 90, chest: null, bodyFat: null, other: [] }] })
     act(() => measurementLogSheet())
     let form = topSheet()
     setValue(field(form, 'Waist'), '88')
