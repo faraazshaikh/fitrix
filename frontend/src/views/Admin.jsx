@@ -250,7 +250,7 @@ function UserDetail({ id, viewerOwner, trainers = [], onChanged, close }) {
         {u.expiresAt && <button className="btn" onClick={() => confirmSheet({ title: 'Make ' + u.name + ' indefinite?', message: 'They keep access until you disable or delete the account.', confirmText: 'Make indefinite', onConfirm: () => setValidity(null) })}>Make indefinite</button>}
       </div>
     </>}
-    {!u.owner && <TrainerSection u={u} trainers={trainers} onChanged={onChanged} close={close} />}
+    <TrainerSection u={u} trainers={trainers} onChanged={onChanged} close={close} />
     {!u.admin && <>
       <button className={'btn ' + (u.disabled ? 'primary' : 'danger')} style={{ margin: '12px 0 4px' }}
         onClick={() => u.disabled ? setDisabled(false)

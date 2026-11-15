@@ -37,8 +37,9 @@ export function RegisterSheet({ close, initialCode = '' }) {
     const n = name.trim()
     if (!n) { useUI.getState().toast(t('Enter a name')); return }
     if (inviteOnly && !code.trim()) { useUI.getState().toast(t('An invite code is required')); return }
-    // An invite is made for one address, so the server wants that same address back.
-    if (inviteOnly && !looksLikeEmail(email)) { useUI.getState().toast(t('That is not an e-mail address.')); return }
+    // An invite made for one address needs that address back (the server says so); one made without
+    // an address does not, so an empty box is fine and only a wrong-looking one is refused.
+    if (inviteOnly && email.trim() && !looksLikeEmail(email)) { useUI.getState().toast(t('That is not an e-mail address.')); return }
     if (!adult) { toastNeedAdult(); return }
     try {
       const u = await passkeyRegister(n, code.trim(), inviteOnly ? email.trim() : '', askTrainerConsent)
@@ -65,7 +66,7 @@ export function RegisterSheet({ close, initialCode = '' }) {
     <input ref={ref} className="input" placeholder={t('Your name')} maxLength={40} value={name} onChange={e => setName(e.target.value)} />
     {inviteOnly && <>
       <div style={{ height: 10 }} />
-      <input className="input" type="email" name="email" autoComplete="email" inputMode="email" placeholder={t('E-mail address')} maxLength={254}
+      <input className="input" type="email" name="email" autoComplete="email" inputMode="email" placeholder={t('E-mail (optional)')} maxLength={254}
         value={email} onChange={e => setEmail(e.target.value)} autoCapitalize="none" autoCorrect="off" />
       <div style={{ height: 10 }} />
       <input className="input" placeholder={t('Invite code')} maxLength={40} value={code}

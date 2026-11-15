@@ -89,31 +89,31 @@ const guestWeb = {
 }
 
 describe('the root', () => {
-  it('is an account card and five groups, nothing else', () => {
+  it('is an account card and the basics, nothing else', () => {
     mount()
     expect(host.querySelector('.sp-acct .lrow-t').textContent).toBe('Guest')
     expect(host.querySelector('.sp-acct .lrow-s').textContent).toBe('Your data lives on this device. Sign in to sync.')
-    expect(titles()).toEqual(['Guest', 'Workouts', 'Plan & equipment', 'Appearance & units', 'Health & devices', 'Data & backup', 'Body fat calculator', 'BMR calculator', 'Simple settings'])
+    expect(titles()).toEqual(['Guest', 'Appearance & units', 'Data & backup', 'Body fat calculator', 'BMR calculator'])
   })
 
-  it('simple settings: the basics, Reminders by themselves, and the rest under All settings', () => {
-    mocks.S.simple = true
+  it('has no simple switch and no All settings row, and the search still finds every page', () => {
     mocks.push = true
     mocks.user = { id: 'u1', name: 'Digi' }
     mount()
-    expect(titles()).toEqual(['Digi', 'Appearance & units', 'Data & backup', 'Reminders', 'All settings', 'Body fat calculator', 'BMR calculator', 'Simple settings'])
-    act(() => rowTitled('All settings').click())
-    expect(titles()).toEqual(['Digi', 'Workouts', 'Plan & equipment', 'Appearance & units', 'Health & devices', 'Data & backup', 'Body fat calculator', 'BMR calculator', 'Simple settings'])
+    expect(titles()).toEqual(['Digi', 'Appearance & units', 'Data & backup', 'Reminders', 'Body fat calculator', 'BMR calculator'])
+    expect(searchSettings('rest timer', guestWeb).map(h => h.page)).toContain('workout')
   })
 
-  it('simple settings: the switch turns it on and off, and the search still finds every page', () => {
+  it('a trainer sees My trainees and a trainee sees Your trainer, right under the account card', () => {
+    mocks.user = { id: 'u1', name: 'Digi', trainer: true }
     mount()
-    const sw = () => rowTitled('Simple settings').querySelector('[role="switch"], input')
-    expect(mocks.S.simple).toBeUndefined()
-    act(() => sw().click())
-    expect(mocks.S.simple).toBe(true)
-    mocks.S.simple = true
-    expect(searchSettings('rest timer', guestWeb).map(h => h.page)).toContain('workout')
+    expect(titles().slice(0, 2)).toEqual(['Digi', 'My trainees'])
+    mocks.user = { id: 'u2', name: 'Test', myTrainer: { name: 'Digital', ack: true } }
+    mount()
+    expect(titles().slice(0, 2)).toEqual(['Test', 'Your trainer'])
+    mocks.user = { id: 'u3', name: 'Plain' }
+    mount()
+    expect(titles().slice(0, 2)).toEqual(['Plain', 'Appearance & units'])
   })
 
   it('each group lists its pages, with value previews', () => {
@@ -138,7 +138,7 @@ describe('the root', () => {
 
   it('marks the page rows so a long preview wraps instead of losing its second half', () => {
     mount()
-    for (const r of ['Workouts', 'Plan & equipment', 'Appearance & units', 'Health & devices', 'Data & backup'].map(rowTitled)) expect(r.classList.contains('sp-root-row')).toBe(true)
+    for (const r of ['Appearance & units', 'Data & backup'].map(rowTitled)) expect(r.classList.contains('sp-root-row')).toBe(true)
     mount('workouts')
     for (const r of ['Workout', 'Timer alerts'].map(rowTitled)) expect(r.classList.contains('sp-root-row')).toBe(true)
     mount('plan-equipment')
@@ -190,12 +190,12 @@ describe('the root', () => {
   it('a row opens its page; the Coach row opens the phone Coach setup; the card opens Account', () => {
     mocks.MOBILE = true
     mount()
-    act(() => rowTitled('Workouts').click())
+    act(() => rowTitled('Appearance & units').click())
     act(() => host.querySelector('.sp-acct').click())
     mount('workouts')
     act(() => rowTitled('Timer alerts').click())
     act(() => rowTitled('AI Coach').click())
-    expect(mocks.navs).toEqual([['/settings/workouts'], ['/settings/account'], ['/settings/alerts'], ['/coach/setup']])
+    expect(mocks.navs).toEqual([['/settings/appearance'], ['/settings/account'], ['/settings/alerts'], ['/coach/setup']])
   })
 
   it('in a hosted app, an admin gets the Coach row too, straight to the Coach card of the admin dashboard', () => {
@@ -342,7 +342,7 @@ describe('the search query', () => {
     window.history.replaceState({ key: 'root2', idx: 3 }, '')  // the gear, a tab, Android Back then the gear
     mount()
     expect(host.querySelector('.sp-search input').value).toBe('')
-    expect(titles()).toContain('Workouts')
+    expect(titles()).toContain('Appearance & units')
   })
 })
 

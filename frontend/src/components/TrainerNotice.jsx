@@ -3,7 +3,7 @@ import { useStore } from '../store/useStore.js'
 import { api } from '../lib/api.js'
 import { t } from '../lib/i18n.js'
 import { confirmSheet } from '../sheets.jsx'
-import { needsAck, wantsSimpleDefault } from '../lib/trainer-notice.js'
+import { needsAck } from '../lib/trainer-notice.js'
 
 const setTrainer = myTrainer => useStore.setState(s => (s.user ? { user: { ...s.user, myTrainer } } : {}))
 
@@ -23,7 +23,6 @@ export function leaveTrainer(name) {
 // the trainer sees anything (api/trainer.js canSee waits for this answer).
 export default function useTrainerNotice(ready) {
   const user = useStore(s => s.user)
-  const S = useStore(s => s.S)
   const asked = useRef(false)
   useEffect(() => {
     if (!ready || asked.current || !needsAck(user)) return
@@ -37,7 +36,4 @@ export default function useTrainerNotice(ready) {
       onCancel: () => api('/api/trainer/leave', { method: 'POST', body: '{}' }).then(() => setTrainer(null)).catch(() => {})
     })
   }, [ready, user])
-  useEffect(() => {
-    if (ready && wantsSimpleDefault(user, S)) useStore.getState().update(s => { s.simple = true })
-  }, [ready, user?.myTrainer, S.simple])
 }

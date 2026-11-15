@@ -86,7 +86,7 @@ describe('the landing page of an invite-only server', () => {
     expect(mocks.sheets).toHaveLength(1)
     const sheet = mount(mocks.sheets[0](() => {}))
     expect(sheet.querySelector('input[placeholder="Invite code"]').value).toBe('AB12CD34')
-    expect(sheet.querySelector('input[placeholder="E-mail address"]')).toBeTruthy()
+    expect(sheet.querySelector('input[placeholder="E-mail (optional)"]')).toBeTruthy()
     expect(sheet.querySelector('input[placeholder="Your name"]')).toBeTruthy()
   })
 })

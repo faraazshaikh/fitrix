@@ -4,6 +4,15 @@ Newest first. Each release is a `## vX.Y.Z (YYYY-MM-DD)` section, and the releas
 GitHub and GitLab are that section, word for word. New work goes under `## Unreleased` until the
 tag. Write it for the people using the app: what changed for them, short, no em dashes.
 
+## v1.5.1 (2026-11-15)
+
+**Simpler You screen.** Settings now shows only the basics, with Reminders, and search still finds
+everything else. The Simple settings switch and the All settings row are gone. My trainees (for a
+trainer) and Your trainer (for a trainee) sit right under your profile card instead of inside
+Account. The Cloudflare Access row is gone from the server sheet on the phone. The owner can now be
+a trainer too. Signing up with a trainer's invite no longer asks for an e-mail address it does not
+need. A new routine that would share a name with another is numbered (New routine 2).
+
 ## v1.5.0 (2026-11-16)
 
 **Trainers.** An admin can make anyone a trainer (admin dashboard, open a person, Make trainer). A
